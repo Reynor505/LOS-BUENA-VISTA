@@ -14,7 +14,7 @@ Sistema para registrar y dar seguimiento a los participantes (niños, niñas, ad
 
 ## Objetivo
 
-Contar con un sistema que permita organizar los datos de los participantes, asignarlos a un hogar con su cuidadora y mantener un historial confiable de cada uno.
+Contar con un sistema que permita organizar los datos de los participantes, asignarlos a un hogar con su cuidadora y mantener un historial confiable de cada unoo.
 
 ## Tecnologías utilizadas
 Herramienta	Uso en el proyecto
