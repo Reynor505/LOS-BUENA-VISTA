@@ -8,7 +8,6 @@ ventana.config(bg="#0c1515")
 GRIS_PANEL = "#555555"
 GRIS_CLARO = "#C8D0DA"
 
-
 separacion=tk.Frame(ventana,bg="#00ffff",width="200",height="50")
 
 panel = tk.Frame(ventana, bg=GRIS_PANEL, width=464, height=430)
@@ -26,10 +25,6 @@ tk.Label(panel, text="Contraseña", bg=GRIS_PANEL, fg=GRIS_CLARO,font=("Pacifico
 entry_clave = tk.Entry(panel, bg=GRIS_CLARO, fg="black", relief="flat",font=("Pacifico", 14), justify="center", show="*")
 
 entry_clave.pack(fill="x", padx=28, pady=(3, 5), ipady=18)
-
-
-
-
 
 
 separacion.pack(fill="y",side="left")
