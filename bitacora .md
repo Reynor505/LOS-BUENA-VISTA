@@ -9,5 +9,6 @@
 ## 15=11=2026
 * se normalizo las tablas de my sql
 * se decidio cual seria el prototipo funcinal con integracion de guardado de datos en la BASE de DATOS
+* se ha usado la libreria hashlib para codificar las contraseñas
 * se rediseñaron los mockups
 * se conecto la base de datos a el sistema
