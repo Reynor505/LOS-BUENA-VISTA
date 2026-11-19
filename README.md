@@ -18,7 +18,8 @@ Sistema de información para registrar y dar seguimiento a los participantes (ni
 Instala las dependencias con:
 
 ```bash
-pip install pymysql pillow
+pip install pymysql
+pip install pillow
 ```
 
 | Librería | Uso |
