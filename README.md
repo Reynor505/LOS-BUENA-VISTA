@@ -9,8 +9,8 @@ Sistema de información para registrar y dar seguimiento a los participantes (ni
 
 ### Software necesario
 
-- **MySQL Server 8.0** en ejecución (instancia local o remota).
-- **Python 3.x** para ejecutar el archivo `.py`.
+- **MySQL Server 8.0.46* en ejecución (instancia local o remota).
+- **Python 3.15.2* para ejecutar el archivo `.py`.
 - **Visual Studio Code** (opcional, recomendado) como editor para correr el proyecto.
 
 ### Librerías de Python
