@@ -3,17 +3,28 @@
 # Proyecto integrador 
 
 ## Descripción
+Sistema de información para registrar y dar seguimiento a los participantes (niños, niñas, adolescentes y jóvenes) de Aldeas Infantiles SOS. Permite gestionar su historial de desarrollo, su asignación a hogares y la información de las cuidadoras a cargo, así como el egreso y el seguimiento posterior a la salida del programa. También permite registrar a los trabajadores como usuarios del sistema y asignarles distintos niveles de acceso según su rol, con un registro de los ingresos para mayor seguridad.
 
-Sistema para registrar y dar seguimiento a los participantes (niños, niñas, adolescentes y jóvenes) de Aldeas Infantiles SOS, con su historial, hogar y cuidadora.
- que centraliza a
+## Requisitos
 
-## Requisitos 
-se necesita de una instancia de servidor My sql server 8.0.46 y de visual estudio code para correr el archivo ".py" se necesita de python 3.15.2
-tambien, tambien se recomienda tener instaladas las librerias de my sql y de pillow 
-``` bag
-pip install pymysql
-pip install pillow
+### Software necesario
+
+- **MySQL Server 8.0** en ejecución (instancia local o remota).
+- **Python 3.x** para ejecutar el archivo `.py`.
+- **Visual Studio Code** (opcional, recomendado) como editor para correr el proyecto.
+
+### Librerías de Python
+
+Instala las dependencias con:
+
+```bash
+pip install pymysql pillow
 ```
+
+| Librería | Uso |
+| --- | --- |
+| `pymysql` | Conexión del programa con la base de datos MySQL |
+| `pillow` | Manejo de imágenes en la interfaz |
 ## Integrantes
 * Callisaya Loza Miguel Mauricio
 * Cruz Chino Ronald
@@ -22,14 +33,24 @@ pip install pillow
 
 ## Objetivo
 
-Contar con un sistema que permita organizar los datos de los participantes, asignarlos a un hogar con su cuidadora y mantener un historial confiable de cada unoo.
+Contar con un sistema que organice y proteja los datos de los participantes de Aldeas Infantiles SOS, los asigne a un hogar con su cuidadora y mantenga un historial
+confiable de cada uno, con acceso solo para el personal autorizado.
 
 ## Tecnologías utilizadas
-Herramienta	Uso en el proyecto
-* Python	Lenguaje de programación del sistema
-* MySQL	Base de datos 
-* draw.io	Diagramas
-* GitHub	Repositorio y trabajo en grupo
+
+| Herramienta | Uso en el proyecto |
+| --- | --- |
+| Python | Lenguaje de programación del sistema |
+| tkinter | Interfaz gráfica (inicio de sesión, formularios y tablas de consulta) |
+| MySQL | Gestor de la base de datos |
+| MySQL Workbench | Creación y administración de la base de datos |
+| PyMySQL | Conexión entre Python y MySQL |
+| Pillow | Manejo de imágenes en la interfaz |
+| draw.io | Diagramas (modelo entidad-relación y otros) |
+| Visual Studio Code | Editor de código |
+| GitHub | Repositorio y trabajo en grupo |
+[Google Drive](https://drive.google.com/drive/folders/1D1oKaEpIoHGvtTVGoowuFFJGCXfZ78w0) | Almacenamiento de la documentación |
+
 ## 1 Descargar el proyecto
 primero se debe descargar el repositorio ejecutando el siguiente comando en la consola.
 ```bash
@@ -41,7 +62,7 @@ primero se debe descargar el repositorio ejecutando el siguiente comando en la c
   ```
 ## Se debe iniciar el script my sql en workbench
    
- ``` bash
+ ```
  willy aqui metes capturas 
  ```
 
