@@ -12,7 +12,8 @@
 * se ha usado la libreria hashlib para codificar las contraseñas
 * se rediseñaron los mockups
 * se conecto la base de datos a el sistema
-## se termino de crear todas las tablas de la base de datos 
+## 19-11-2026 
+* se termino de crear todas las tablas de la base de datos 
 * se empezo con la creacion del sistema de registro
 * se actualizo el readme 
 * se añadio la parte solicitada en el informe
