@@ -9,7 +9,11 @@ Sistema para registrar y dar seguimiento a los participantes (niños, niñas, ad
 
 ## Requisitos 
 se necesita de una instancia de servidor My sql server 8.0.46 y de visual estudio code para correr el archivo ".py" se necesita de python 3.15.2
-tambien
+tambien, tambien se recomienda tener instaladas las librerias de my sql y de pillow 
+``` bag
+pip install pymysql
+pip install pillow
+```
 ## Integrantes
 * Callisaya Loza Miguel Mauricio
 * Cruz Chino Ronald
