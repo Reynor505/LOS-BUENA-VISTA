@@ -61,11 +61,14 @@ primero se debe descargar el repositorio ejecutando el siguiente comando en la c
 ```bash
   cooming soon dearly/sea que falta compañero
   ```
-## Se debe iniciar el script my sql en workbench
+## Se debe iniciar el script "sql" en workbench
+
    
  ```
- willy aqui metes capturas 
+<img width="327" height="654" alt="Captura de pantalla (120)" src="https://github.com/user-attachments/assets/678b060c-4f9c-4d47-b926-c17c57e42f28" />
+
  ```
+se debe tener en cuenta que al correr el archivo *base_de_datos_ordenada.sql* se deben tener las siguientes tablas
 
 ## se debe cambiar los valores se la siguiente linea de codigo
 
