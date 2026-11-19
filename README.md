@@ -67,9 +67,10 @@ primero se debe descargar el repositorio ejecutando el siguiente comando en la c
 
 se debe tener en cuenta que al correr el archivo *base_de_datos_ordenada.sql* se deben tener las siguientes tablas
 
-## se debe cambiar los valores se la siguiente linea de codigo
+## se debe cambiar los valores se la siguiente linea de codigo dentro del archivo.py
 
 ```
 conexion_datos = dict(host="localhost", port=3307, user="root", password="112367", database="aldeas_sos")
 ```
-
+todo esto es con el objetivo de conectarse a la base de datos 
+## 
