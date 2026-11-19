@@ -17,3 +17,5 @@
 * se empezo con la creacion del sistema de registro
 * se actualizo el readme 
 * se añadio la parte solicitada en el informe
+* se cambio el largo de *VARCHAR* en el scrip sql de 20 a 10 para estar de acorde con un carnet boliviano con o sin extension
+* se borro la columna zona del script sql en la tabla de cuidadora
