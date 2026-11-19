@@ -8,7 +8,11 @@ import pymysql
 from PIL import Image, ImageTk
 
 # Cambiar estas consignas: 
+<<<<<<< HEAD
 conexion_datos = dict(host="localhost", port=3307, user="root", password="112367", database="aldeas_sos")
+=======
+conexion_datos = dict(host="localhost", port= 3306, user="root", password="112367", database="aldeas_sos")
+>>>>>>> 3a6ec6a7ff764eaa871902ef94db8f5d20329599
 
 
 def ingresar():
