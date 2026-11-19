@@ -19,3 +19,4 @@
 * se añadio la parte solicitada en el informe
 * se cambio el largo de *VARCHAR* en el scrip sql de 20 a 10 para estar de acorde con un carnet boliviano con o sin extension
 * se borro la columna zona del script sql en la tabla de cuidadora
+* se cambiaron los valores a not null en algunos campos
