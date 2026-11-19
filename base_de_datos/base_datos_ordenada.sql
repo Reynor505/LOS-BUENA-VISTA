@@ -4,14 +4,15 @@ USE aldeas_sos;
 CREATE TABLE rol (
     id_rol INT AUTO_INCREMENT PRIMARY KEY,
     nombre VARCHAR(50) NOT NULL,
-    descripcion VARCHAR(75),
+    descripcion VARCHAR(75) NOT NULL,
     CONSTRAINT uq_rol_nombre UNIQUE (nombre)
+    
 );
 
 CREATE TABLE permiso (
     id_permiso INT AUTO_INCREMENT PRIMARY KEY,
     nombre VARCHAR(40) NOT NULL,
-    descripcion VARCHAR(75),
+    descripcion VARCHAR(75) NOT NULL,
     CONSTRAINT uq_permiso_nombre UNIQUE (nombre)
 );
 
@@ -29,7 +30,7 @@ CREATE TABLE usuario (
     id_rol INT NOT NULL,
     nombre VARCHAR(60) NOT NULL,
     apellido VARCHAR(60) NOT NULL,
-    ci VARCHAR(20) NOT NULL UNIQUE,
+    ci VARCHAR(10) NOT NULL UNIQUE,
     nombre_usuario VARCHAR(40) NOT NULL UNIQUE,
     contrasena_hash CHAR(64) NOT NULL,
     fecha_de_ingreso DATE NOT NULL,
@@ -55,8 +56,7 @@ CREATE TABLE hogar (
     id_hogar INT AUTO_INCREMENT PRIMARY KEY,
     numero_hogar INT NOT NULL,
     nombre_hogar VARCHAR(40) NOT NULL,
-    zona VARCHAR(40),
-    direccion VARCHAR(50),
+    direccion VARCHAR(50) NOT NULL,
     capacidad INT NOT NULL,
     estado VARCHAR(15) NOT NULL DEFAULT 'activo',
     CONSTRAINT uq_hogar_numero UNIQUE (numero_hogar),
@@ -65,6 +65,7 @@ CREATE TABLE hogar (
     CONSTRAINT ck_hogar_nombre CHECK (TRIM(nombre_hogar) <> ''),
     CONSTRAINT ck_hogar_capacidad CHECK (capacidad > 0),
     CONSTRAINT ck_hogar_estado CHECK (estado IN ('activo', 'inactivo'))
+    
 );
 
 CREATE TABLE cuidadora (
@@ -72,16 +73,16 @@ CREATE TABLE cuidadora (
     id_hogar INT NOT NULL,
     nombres VARCHAR(40) NOT NULL,
     apellidos VARCHAR(40) NOT NULL,
-    ci VARCHAR(20) NOT NULL UNIQUE,
-    telefono VARCHAR(20),
-    direccion VARCHAR(75),
+    ci VARCHAR(10) NOT NULL UNIQUE,
+    telefono VARCHAR(20) NOT NULL,
+    direccion VARCHAR(75)NOT NULL,
     estado VARCHAR(15) NOT NULL DEFAULT 'activo',
     FOREIGN KEY (id_hogar) REFERENCES hogar(id_hogar),
     CONSTRAINT ck_cuidadora_nombre CHECK (TRIM(nombres) <> '' AND TRIM(apellidos) <> ''),
     CONSTRAINT ck_cuidadora_estado CHECK (estado IN ('activo', 'inactivo'))
 );
 ALTER TABLE hogar
-    ADD COLUMN id_cuidadora_responsable INT NULL,
+    ADD COLUMN id_cuidadora_responsable INT NOT NULL,
     ADD CONSTRAINT fk_hogar_responsable
         FOREIGN KEY (id_cuidadora_responsable) REFERENCES cuidadora(id_cuidadora);
 
@@ -90,6 +91,7 @@ CREATE TABLE participantes (
     nombre VARCHAR(40) NOT NULL,
     apellido VARCHAR(40) NOT NULL,
     fecha_de_nacimiento DATE NOT NULL,
+    ci VARCHAR(10) NOT NULL UNIQUE,
     sexo CHAR(1) NOT NULL,
     fecha_de_ingreso DATE NOT NULL,
     CONSTRAINT uq_participante UNIQUE (nombre, apellido, fecha_de_nacimiento),
