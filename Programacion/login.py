@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 import pymysql
 from PIL import Image, ImageTk
 
-conexion_datos = dict(host="localhost", port=3307, user="root", password="112367", database="aldeas_sos")
+conexion_datos = dict(host="localhost", port=3306, user="root", password="112367", database="aldeas_sos")
 
 login_correcto = False
 
@@ -26,13 +26,13 @@ def ingresar():
     clave = entry_clave.get()
 
     if nombre == "" or clave == "":
-        mostrar_error("Completa usuario y contraseña.")
+        mostrar_error("Completa usuario y contraseña")
         return
 
     try:
         con = pymysql.connect(**conexion_datos)
     except pymysql.MySQLError:
-        mostrar_error("No se pudo conectar a la base de datos.")
+        mostrar_error("No se pudo conectar a la base de datos")
         return
 
     cursor = con.cursor()
@@ -86,7 +86,6 @@ def ingresar():
 
 
 def abrir_login():
-    """Muestra la ventana de login. Devuelve True si el ingreso fue correcto."""
     global ventana, entry_usuario, entry_clave, marco_error, lbl_error, btn_ingresar
 
     ventana = tk.Tk()
@@ -143,7 +142,7 @@ def abrir_login():
              font=("Segoe UI", 10)).pack(anchor="w")
     entry_clave = tk.Entry(tarjeta, font=("Segoe UI", 12), relief="solid", bd=1, show="•")
     entry_clave.pack(fill="x", ipady=8, pady=(4, 0))
-    
+
     marco_error = tk.Frame(tarjeta, bg="#FDE8E6")
     lbl_error = tk.Label(marco_error, text="", bg="#FDE8E6", fg="#B42318",
                          font=("Segoe UI", 10), anchor="w", padx=10, pady=8)

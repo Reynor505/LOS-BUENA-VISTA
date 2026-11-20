@@ -6,8 +6,8 @@ import pymysql
 
 conexion_datos = dict(host="localhost", port=3306, user="root", password="112367", database="aldeas_sos")
 
-AZUL = "#004AAD"
-GRIS = "#C9D1DB"
+AZUL = "#d9d9d9"
+GRIS = "#1f2937"
 
 
 def obtener_hogares():
