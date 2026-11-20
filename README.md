@@ -9,7 +9,8 @@ Sistema de información para registrar y dar seguimiento a los participantes (ni
 
 ### Software necesario
 
-- **MySQL Server 8.0.46* en ejecución (instancia local o remota).
+- **MySQL Server 8.0.46* en ejecución (instancia local).
+- **MySQL Workbench 26.10.0* para ejecutar el script *"".sql*
 - **Python 3.15.2* para ejecutar el archivo `.py`.
 - **Visual Studio Code** (opcional, recomendado) como editor para correr el proyecto.
 
@@ -43,7 +44,7 @@ confiable de cada uno, con acceso solo para el personal autorizado.
 | --- | --- |
 | Python | Lenguaje de programación del sistema |
 | tkinter | Interfaz gráfica (inicio de sesión, formularios y tablas de consulta) |
-| MySQL | Gestor de la base de datos |
+| MySQLserver| Gestor de la base de datos |
 | MySQL Workbench | Creación y administración de la base de datos |
 | PyMySQL | Conexión entre Python y MySQL |
 | Pillow | Manejo de imágenes en la interfaz |
