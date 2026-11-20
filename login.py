@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 import pymysql
 from PIL import Image, ImageTk
 
-conexion_datos = dict(host="localhost", port=3307, user="root", password="112367", database="aldeas_sos")
+conexion_datos = dict(host="localhost", port=3306, user="root", password="qerurinore31M", database="aldeas_sos")
 
 login_correcto = False
 
