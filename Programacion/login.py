@@ -65,7 +65,6 @@ def ingresar():
         con.commit()
         con.close()
 
-        # Login correcto: cerramos la ventana del login
         login_correcto = True
         ventana.destroy()
         return
