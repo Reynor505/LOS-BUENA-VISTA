@@ -8,11 +8,7 @@ import pymysql
 from PIL import Image, ImageTk
 
 # Cambiar estas consignas: 
-<<<<<<< HEAD
-conexion_datos = dict(host="localhost", port=3307, user="root", password="112367", database="aldeas_sos")
-=======
 conexion_datos = dict(host="localhost", port= 3306, user="root", password="112367", database="aldeas_sos")
->>>>>>> 3a6ec6a7ff764eaa871902ef94db8f5d20329599
 
 
 def ingresar():
@@ -157,11 +153,6 @@ tk.Label(tarjeta, text="Al llegar a 3 intentos fallidos la cuenta se bloquea 1 m
          font=("Segoe UI", 9),
          wraplength=380,
          justify="left").pack(anchor="w", pady=(12, 0))
-
-tk.Label(panel, text="Tablas: USUARIO (intentos_fallidos, bloqueo_hasta), REGISTRO_ACCESO",
-         bg="#CDEBF8",
-         fg="#6B7280",
-         font=("Segoe UI", 8)).pack(anchor="w", padx=44, pady=(12, 0))
 
 ventana.bind("<Return>", lambda e: ingresar())
 
