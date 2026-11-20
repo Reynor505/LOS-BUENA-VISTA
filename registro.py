@@ -44,11 +44,33 @@ def guardar():
         return
 
     try:
-        datetime.strptime(nacimiento, "%Y-%m-%d")
-        datetime.strptime(ingreso, "%Y-%m-%d")
-        datetime.strptime(inicio, "%Y-%m-%d")
+        f_nacimiento = datetime.strptime(nacimiento, "%Y-%m-%d")
+        f_ingreso = datetime.strptime(ingreso, "%Y-%m-%d")
+        f_inicio = datetime.strptime(inicio, "%Y-%m-%d")
     except ValueError:
         messagebox.showwarning("Fecha incorrecta", "Usa el formato AAAA-MM-DD (ejemplo: 2012-05-30).")
+        return
+
+    hoy = datetime.now()
+
+    if f_nacimiento > hoy:
+        messagebox.showwarning("Fecha incorrecta", "La fecha de nacimiento no puede ser futura.")
+        return
+
+    edad = hoy.year - f_nacimiento.year
+    if (hoy.month, hoy.day) < (f_nacimiento.month, f_nacimiento.day):
+        edad = edad - 1
+
+    if edad >= 18:
+        messagebox.showwarning("Edad no permitida", "Solo se pueden registrar menores de 18 años.")
+        return
+
+    if f_ingreso < f_nacimiento:
+        messagebox.showwarning("Fecha incorrecta", "La fecha de ingreso no puede ser anterior al nacimiento.")
+        return
+
+    if f_inicio < f_ingreso:
+        messagebox.showwarning("Fecha incorrecta", "La fecha de inicio no puede ser anterior a la fecha de ingreso.")
         return
 
     id_hogar = hogares[pos_hogar][0]
