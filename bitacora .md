@@ -16,7 +16,7 @@
 * se termino de crear todas las tablas de la base de datos 
 * se empezo con la creacion del sistema de registro
 * se actualizo el readme 
-* se añadio la parte solicitada en el informe
-* se cambio el largo de *VARCHAR* en el scrip sql de 20 a 10 para estar de acorde con un carnet boliviano con o sin extension
+* se añadio la parte solicitada en el informe, *validación e integridad de datos*
+* se cambio el largo de *VARCHAR* en el scrip sql en la columna CI de *cuidadora* y *participacipante* de 20 a 10 para estar de acorde con un carnet boliviano con o sin extension
 * se borro la columna zona del script sql en la tabla de cuidadora
 * se cambiaron los valores a not null en algunos campos
