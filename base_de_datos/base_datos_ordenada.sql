@@ -100,6 +100,8 @@ CREATE TABLE participantes (
     CONSTRAINT ck_part_fechas CHECK (fecha_de_ingreso >= fecha_de_nacimiento)
 );
 
+ALTER TABLE participantes ADD COLUMN situacion_inicial VARCHAR(350) NOT NULL;
+
 CREATE TABLE asignacion_hogar (
     id_asignacion INT AUTO_INCREMENT PRIMARY KEY,
     id_participante INT NOT NULL,
