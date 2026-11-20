@@ -20,3 +20,10 @@
 * se cambio el largo de *VARCHAR* en el scrip sql en la columna CI de *cuidadora* y *participacipante* de 20 a 10 para estar de acorde con un carnet boliviano con o sin extension
 * se borro la columna zona del script sql en la tabla de cuidadora
 * se cambiaron los valores a not null en algunos campos
+* se añdio una pantalla (la de registro)
+* se añadio datos de prueba a la base de datos 
+* se añadio la conexion a la base de datos junto a las interfaces graficas
+* se uso programacion modular para dividir los archivos de programacion 
+    -main:sirve para unir los dos modulos haciendo referencia a ellos y a las funciones creadas adentro.
+    -login: sirve para verificar si un permiso o un usuario esta registrado en la base de datos.
+    -registro: sirve para agregar los datos del participante al SQL
