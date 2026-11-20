@@ -213,7 +213,7 @@ se debe tener en cuenta que al correr el archivo *base_de_datos_ordenada.sql* se
 ## se debe cambiar los valores se la siguiente linea de codigo dentro del archivo.py
 
 ```
-conexion_datos = dict(host="localhost", port=3307, user="root", password="112367", database="aldeas_sos")
+conexion_datos = dict(host="localhost", port=3306, user="root", password="", database="aldeas_sos")
 ```
 todo esto es con el objetivo de conectarse a la base de datos 
 ## 
