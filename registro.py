@@ -43,13 +43,22 @@ def guardar():
         messagebox.showwarning("Falta información", "Elige el hogar.")
         return
 
-    try:
-        f_nacimiento = datetime.strptime(nacimiento, "%Y-%m-%d")
-        f_ingreso = datetime.strptime(ingreso, "%Y-%m-%d")
-        f_inicio = datetime.strptime(inicio, "%Y-%m-%d")
-    except ValueError:
-        messagebox.showwarning("Fecha incorrecta", "Usa el formato AAAA-MM-DD (ejemplo: 2012-05-30).")
-        return
+    campos_fecha = [("nacimiento", nacimiento), ("ingreso", ingreso), ("inicio", inicio)]
+    fechas = {}
+    for nombre_campo, valor in campos_fecha:
+        try:
+            fechas[nombre_campo] = datetime.strptime(valor, "%Y-%m-%d")
+        except ValueError:
+            messagebox.showwarning(
+                "Fecha incorrecta",
+                f"La fecha de {nombre_campo} no es válida.\n"
+                f"Recibí: {valor!r}\n"
+                "Usa el formato AAAA-MM-DD (ejemplo: 2012-05-30).")
+            return
+
+    f_nacimiento = fechas["nacimiento"]
+    f_ingreso = fechas["ingreso"]
+    f_inicio = fechas["inicio"]
 
     hoy = datetime.now()
 
