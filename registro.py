@@ -4,7 +4,7 @@ from datetime import datetime
 
 import pymysql
 
-conexion_datos = dict(host="localhost", port=3306, user="root", password="112367", database="aldeas_sos")
+conexion_datos = dict(host="localhost", port=3306, user="root", password="qerurinore31M", database="aldeas_sos")
 
 AZUL = "#004AAD"
 GRIS = "#C9D1DB"
