@@ -1,169 +1,215 @@
 import tkinter as tk
 from tkinter import messagebox
-import os
-import hashlib
 from datetime import datetime, timedelta
-
-import pymysql
 from PIL import Image, ImageTk
+import hashlib
+import pymysql
 
-conexion_datos = dict(host="localhost", port=3306, user="root", password="qerurinore31M", database="aldeas_sos")
+acceso_concedido = False
 
-login_correcto = False
-
-
-def mostrar_error(texto):
-    lbl_error.config(text=texto)
-    marco_error.pack(fill="x",
-                     pady=(10, 0),
-                     before=btn_ingresar)
+HOST = "localhost"
+USUARIO = "root"
+CONTRASENA = "denil"
+BASE_DE_DATOS = "aldeas_sos"
 
 
-def ingresar():
-    global login_correcto
+def conectar():
+    return pymysql.connect(host=HOST,
+                           user=USUARIO,
+                           password=CONTRASENA,
+                           database=BASE_DE_DATOS,
+                           charset="utf8mb4")
 
-    nombre = entry_usuario.get().strip()
-    clave = entry_clave.get()
 
-    if nombre == "" or clave == "":
-        mostrar_error("Completa usuario y contraseña.")
-        return
+def probar_conexion():
+    try:
+        con = conectar()
+        con.close()
+        return True, "Conexión exitosa con la base de datos aldeas_sos"
+    except pymysql.MySQLError as error:
+        return False, f"No se pudo conectar:\n{error}"
+
+
+def consultar(sql, datos=()):
+    con = conectar()
+    try:
+        cursor = con.cursor()
+        cursor.execute(sql, datos)
+        filas = cursor.fetchall()
+        cursor.close()
+        return filas
+    finally:
+        con.close()
+
+
+def mensaje_error(error):
+    codigo = 0
+    if len(error.args) > 0 and isinstance(error.args[0], int):
+        codigo = error.args[0]
+
+    if codigo == 1062:
+        return "Ya existe un registro con esos datos (CI, número o nombre repetido)."
+    if codigo in (3819, 4025):
+        return "Algún dato no cumple las reglas de la base de datos (revisa fechas, sexo y capacidad)."
+    if codigo in (1054, 1048):
+        return ("La estructura de la base de datos no coincide con el programa.\n"
+                "Ejecuta el archivo cambios_base_datos.sql en MySQL Workbench.\n\n" + str(error))
+    return str(error)
+
+
+def validar_usuario(nombre_usuario, contrasena):
+    try:
+        con =conectar()
+    except pymysql.MySQLError as error:
+        return False, f"No se pudo conectar con la base de datos:\n{error}"
 
     try:
-        con = pymysql.connect(**conexion_datos)
-    except pymysql.MySQLError:
-        mostrar_error("No se pudo conectar a la base de datos.")
-        return
+        cursor = con.cursor()
+        cursor.execute("SELECT id_usuario, contrasena_hash, intentos_fallidos, bloqueo_hasta, estado "
+                       "FROM usuario WHERE nombre_usuario = %s", (nombre_usuario,))
+        fila = cursor.fetchone()
 
-    cursor = con.cursor()
-    cursor.execute("SELECT id_usuario, contrasena_hash, intentos_fallidos, bloqueo_hasta "
-                   "FROM usuario WHERE nombre_usuario = %s", (nombre,))
-    fila = cursor.fetchone()
+        if fila is None:
+            # No se guarda en registro_acceso porque esa tabla exige un id_usuario
+            return False, "Usuario o contraseña incorrectos."
 
-    if fila is None:
-        mostrar_error("Usuario o contraseña incorrectos.")
-        con.close()
-        return
+        id_usuario, hash_guardado, intentos, bloqueo_hasta, estado = fila
+        ahora = datetime.now()
 
-    id_usuario, hash_guardado, intentos, bloqueo = fila
-    ahora = datetime.now()
+        if estado != "activo":
+            return False, "El usuario está inactivo. Habla con el administrador."
 
-    if bloqueo is not None and bloqueo > ahora:
-        segundos = int((bloqueo - ahora).total_seconds()) + 1
-        mostrar_error(f"Cuenta bloqueada. Intenta en {segundos} segundos.")
-        con.close()
-        return
+        # Si todavía está bloqueado no se revisa la contraseña
+        if bloqueo_hasta is not None and bloqueo_hasta > ahora:
+            segundos = int((bloqueo_hasta - ahora).total_seconds()) + 1
+            cursor.execute("INSERT INTO registro_acceso (id_usuario, resultado) VALUES (%s, 'bloqueado')",
+                           (id_usuario,))
+            con.commit()
+            return False, f"Usuario bloqueado. Intenta de nuevo en {segundos} segundos."
 
-    if bloqueo is not None:
-        intentos = 0
+        hash_ingresado = hashlib.sha256(contrasena.encode("utf-8")).hexdigest()
 
-    hash_ingresado = hashlib.sha256(clave.encode("utf-8")).hexdigest()
+        if hash_ingresado == hash_guardado.lower():
+            cursor.execute("UPDATE usuario SET intentos_fallidos = 0, bloqueo_hasta = NULL "
+                           "WHERE id_usuario = %s", (id_usuario,))
+            cursor.execute("INSERT INTO registro_acceso (id_usuario, resultado) VALUES (%s, 'exitoso')",
+                           (id_usuario,))
+            con.commit()
+            return True, "Bienvenido"
 
-    if hash_ingresado == hash_guardado:
-        cursor.execute("UPDATE usuario SET intentos_fallidos = 0, bloqueo_hasta = NULL "
-                       "WHERE id_usuario = %s", (id_usuario,))
-        con.commit()
-        con.close()
-
-        # Login correcto: cerramos la ventana del login
-        login_correcto = True
-        ventana.destroy()
-        return
-    else:
-        intentos += 1
+        # Contraseña incorrecta
+        intentos = intentos + 1
         if intentos >= 3:
-            hasta = ahora + timedelta(minutes=1)
+            nuevo_bloqueo = ahora + timedelta(minutes=1)
             cursor.execute("UPDATE usuario SET intentos_fallidos = 0, bloqueo_hasta = %s "
-                           "WHERE id_usuario = %s", (hasta, id_usuario))
-            mostrar_error("Cuenta bloqueada por 1 minuto.")
+                           "WHERE id_usuario = %s", (nuevo_bloqueo, id_usuario))
+            mensaje = "Contraseña incorrecta. Usuario bloqueado por 1 minuto."
         else:
-            cursor.execute("UPDATE usuario SET intentos_fallidos = %s, bloqueo_hasta = NULL "
-                           "WHERE id_usuario = %s", (intentos, id_usuario))
-            mostrar_error(f"Usuario o contraseña incorrectos. Intento {intentos} de 3.")
+            cursor.execute("UPDATE usuario SET intentos_fallidos = %s WHERE id_usuario = %s",
+                           (intentos, id_usuario))
+            mensaje = f"Usuario o contraseña incorrectos. Intento {intentos} de 3."
+        cursor.execute("INSERT INTO registro_acceso (id_usuario, resultado) VALUES (%s, 'fallido')",
+                       (id_usuario,))
         con.commit()
+        return False, mensaje
 
-    con.close()
-
+    except pymysql.MySQLError as error:
+        return False, f"Error en la base de datos:\n{error}"
+    finally:
+        con.close()
 
 def abrir_login():
-    """Muestra la ventana de login. Devuelve True si el ingreso fue correcto."""
-    global ventana, entry_usuario, entry_clave, marco_error, lbl_error, btn_ingresar
+    global acceso_concedido
+    acceso_concedido = False
 
-    ventana = tk.Tk()
-    ventana.title("Aldeas Infantiles SOS")
-    ventana.geometry("1100x700")
-    ventana.configure(bg="black")
-    ventana.resizable(False, False)
+    ventana=tk.Tk()
+    ventana.title("Login")
+    ventana.geometry("1200x800")
+    ventana.config(bg="#0C0606")
 
-    banda = tk.Frame(ventana, bg="#1FCDF9", height=205)
-    banda.place(x=0, y=253, relwidth=1)
+    Panel_superior=tk.Frame(ventana,bg="#009FE3",width=20,height=200)
+    Panel_superior.pack_propagate(False)
+    Panel_superior.pack(fill="x")
 
-    ruta_logo = os.path.join(os.path.dirname(os.path.abspath(__file__)), "Aldeas SOS.png")
+    panel_inferior=tk.Frame(ventana,bg="#009FE3",height=90)
+    panel_inferior.pack_propagate(False)
+    panel_inferior.pack(side="bottom",fill="x")
 
-    img_logo = Image.open(ruta_logo).convert("RGBA").resize((170, 170), Image.LANCZOS)
-    logo_tk = ImageTk.PhotoImage(img_logo)
-    lbl_logo = tk.Label(banda, image=logo_tk, bg="#00AEEF", bd=0)
-    lbl_logo.image = logo_tk
-    lbl_logo.place(x=50, y=17)
+    panel_derecho=tk.Frame(ventana,bg="#C3F6FF",width=500,height=20)
+    panel_derecho.pack_propagate(False)
+    panel_derecho.pack(side="right",fill="y",padx=(0,29))
 
-    tk.Label(banda, text="ALDEAS\nINFANTILES SOS",
-             bg="#00AEEF", fg="white",
-             font=("Arial", 24, "bold"),
-             justify="left").place(x=780, y=30)
+    panel_izquierdo=tk.Frame(ventana,bg="#0C0606")
+    panel_izquierdo.pack_propagate(False)
+    panel_izquierdo.pack(side="left",expand=True,fill="both")
 
-    tk.Label(banda, text="BOLIVIA",
-             bg="#00AEEF",
-             fg="#CFEFFB",
-             font=("Arial", 24, "bold")).place(x=780, y=120)
-
-    panel = tk.Frame(ventana,
-                     bg="#CDEBF8",
-                     width=505,
-                     height=465)
-    panel.place(x=260, y=103)
-    panel.pack_propagate(False)
-
-    tk.Label(panel, text="Ingreso al sistema",
-             bg="#CDEBF8",
-             fg="#5087D4",
-             font=("Segoe UI", 18, "bold")).pack(anchor="w", padx=44, pady=(35, 15))
-
-    tarjeta = tk.Frame(panel,
-                       bg="white",
-                       padx=20,
-                       pady=20)
-    tarjeta.pack(padx=44, fill="x")
-
-    tk.Label(tarjeta, text="Usuario", bg="white", fg="#4B5563",
-             font=("Segoe UI", 10)).pack(anchor="w")
-    entry_usuario = tk.Entry(tarjeta, font=("Segoe UI", 12), relief="solid", bd=1)
-    entry_usuario.pack(fill="x", ipady=8, pady=(4, 12))
-
-    tk.Label(tarjeta, text="Contraseña", bg="white", fg="#4B5563",
-             font=("Segoe UI", 10)).pack(anchor="w")
-    entry_clave = tk.Entry(tarjeta, font=("Segoe UI", 12), relief="solid", bd=1, show="•")
-    entry_clave.pack(fill="x", ipady=8, pady=(4, 0))
+    #Panel Superior
+    Abrir_logo_Aldeas_sos=Image.open("LOGO_ALDEAS_SOS.jpg")
+    Logo_Aldeas_Redimensionada=Abrir_logo_Aldeas_sos.resize((900,200))
+    Logo_Aldeas=ImageTk.PhotoImage(Logo_Aldeas_Redimensionada)
+    tk.Label(Panel_superior,image=Logo_Aldeas,bd=0,highlightthickness=0).pack(side="left")
     
-    marco_error = tk.Frame(tarjeta, bg="#FDE8E6")
-    lbl_error = tk.Label(marco_error, text="", bg="#FDE8E6", fg="#B42318",
-                         font=("Segoe UI", 10), anchor="w", padx=10, pady=8)
-    lbl_error.pack(fill="x")
+    #PanelDerecho(Inicio de Sesion)
 
-    btn_ingresar = tk.Button(tarjeta, text="Ingresar", bg="#0B6BCB", fg="white",
-                             font=("Segoe UI", 11), relief="flat", cursor="hand2",
-                             activebackground="#095AAB", activeforeground="white",
-                             command=ingresar)
-    btn_ingresar.pack(fill="x", ipady=8, pady=(15, 0))
+    def iniciar_sesion():
+        global acceso_concedido
+        usuario = Usuario_Entry.get().strip()
+        contra = Contra_Entry.get()
 
-    tk.Label(tarjeta, text="Al llegar a 3 intentos fallidos la cuenta se bloquea 1 minuto.",
-             bg="white",
-             fg="#374151",
-             font=("Segoe UI", 9),
-             wraplength=380,
-             justify="left").pack(anchor="w", pady=(12, 0))
+        if usuario == "" or contra == "":
+            messagebox.showwarning("Inicio de sesión", "Escribe tu usuario y tu contraseña.")
+            return
 
-    ventana.bind("<Return>", lambda e: ingresar())
+        correcto, mensaje = validar_usuario(usuario, contra)
+        if correcto:
+            acceso_concedido = True
+            ventana.destroy()         
+        else:
+            messagebox.showerror("Inicio de sesión", mensaje)
+            Contra_Entry.delete(0, "end")
+
+    def conectar_base_de_datos():
+        correcto, mensaje =probar_conexion()
+        if correcto:
+            messagebox.showinfo("Base de datos", mensaje)
+        else:
+            messagebox.showerror("Base de datos", mensaje)
+
+    def mostrar_contrasena():
+        if ver_contra.get():
+            Contra_Entry.config(show="")
+        else:
+            Contra_Entry.config(show="*")
+
+    tk.Label(panel_derecho, text="INICIO DE SESION",font=("Segoe UI",30,"bold"),
+             bg="#C3F6FF",fg="Black").pack(padx=15,anchor="nw",pady=(0,20))
+
+    tk.Label(panel_derecho,text="USUARIO",font=("Segoe UI",23,"bold"),
+             bg="#C3F6FF",fg="Black").pack(padx=15,anchor="nw")
+
+    Usuario_Entry=tk.Entry(panel_derecho,bg="#D7DCE5",relief="solid",bd=1,font=("Segoe UI",20))
+    Usuario_Entry.pack(padx=15,fill="x",ipady=15)
+
+    tk.Label(panel_derecho,text="CONTRASEÑA",font=("Segoe UI",23,"bold"),
+             bg="#C3F6FF",fg="Black").pack(padx=15,anchor="nw")
+
+    Contra_Entry=tk.Entry(panel_derecho,bg="#D7DCE5",relief="solid",bd=1,font=("Segoe UI",20),show="*")
+    Contra_Entry.pack(padx=15,ipady=15,fill="x")
+
+    ver_contra = tk.BooleanVar(value=False)
+    tk.Checkbutton(panel_derecho,text="MOSTRAR",variable=ver_contra,command=mostrar_contrasena,
+                   font=("Segoe UI",19,"bold"),bg="#C3F6FF",activebackground="#C3F6FF",
+                   fg="Black").pack(anchor="nw",padx=15)
+
+    Iniciar_Sesion=tk.Button(panel_derecho,text="INICIAR SESION",font=("Segoe UI",19,"bold"),bg="#1F2937",
+                             fg="White",command=iniciar_sesion)
+    Iniciar_Sesion.pack(fill="x",padx=15,pady=(15,0))
+
+    Conectar_Base_De_Datos=tk.Button(panel_derecho,text="CONECTAR CON LA BASE DE DATOS",font=("Segoe UI",15,"bold"),
+                                     bg="#1F2937",fg="White",command=conectar_base_de_datos)
+    Conectar_Base_De_Datos.pack(fill="x",padx=15,pady=(15,0))
+
+    ventana.bind("<Return>", lambda evento: iniciar_sesion())
 
     ventana.mainloop()
-
-    return login_correcto
+    return acceso_concedido

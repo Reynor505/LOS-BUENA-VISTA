@@ -1,5 +1,5 @@
-from login import abrir_login
-from registro import abrir_registro
+import Login2_0
+import Panel_Inicial
 
-if abrir_login():
-    abrir_registro()
+if Login2_0.abrir_login():
+    Panel_Inicial.abrir_panel()
