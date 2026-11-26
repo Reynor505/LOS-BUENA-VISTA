@@ -27,6 +27,8 @@
     -main:sirve para unir los dos modulos haciendo referencia a ellos y a las funciones creadas adentro.
     -login: sirve para verificar si un permiso o un usuario esta registrado en la base de datos.
     -registro: sirve para agregar los datos del participante al SQL
+## 24-11-2026
+* se crearon las carpetas para organizar los archivos (base de datos) y (mockups)
 ## 25-11-2026
 * se modificaron los mockups para incluir botones faltantes
 * se cambió la disposición de los elementos gráficos en el inicio de sesión se están
