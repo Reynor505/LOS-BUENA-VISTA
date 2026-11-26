@@ -1,7 +1,9 @@
 import tkinter as tk
 from tkinter import messagebox
 from datetime import datetime, timedelta
+from tkinter import ttk
 from PIL import Image, ImageTk
+
 import hashlib
 import pymysql
 
@@ -70,7 +72,6 @@ def validar_usuario(nombre_usuario, contrasena):
         fila = cursor.fetchone()
 
         if fila is None:
-            # No se guarda en registro_acceso porque esa tabla exige un id_usuario
             return False, "Usuario o contraseña incorrectos."
 
         id_usuario, hash_guardado, intentos, bloqueo_hasta, estado = fila
@@ -79,7 +80,6 @@ def validar_usuario(nombre_usuario, contrasena):
         if estado != "activo":
             return False, "El usuario está inactivo. Habla con el administrador."
 
-        # Si todavía está bloqueado no se revisa la contraseña
         if bloqueo_hasta is not None and bloqueo_hasta > ahora:
             segundos = int((bloqueo_hasta - ahora).total_seconds()) + 1
             cursor.execute("INSERT INTO registro_acceso (id_usuario, resultado) VALUES (%s, 'bloqueado')",
@@ -97,7 +97,6 @@ def validar_usuario(nombre_usuario, contrasena):
             con.commit()
             return True, "Bienvenido"
 
-        # Contraseña incorrecta
         intentos = intentos + 1
         if intentos >= 3:
             nuevo_bloqueo = ahora + timedelta(minutes=1)
@@ -117,6 +116,109 @@ def validar_usuario(nombre_usuario, contrasena):
         return False, f"Error en la base de datos:\n{error}"
     finally:
         con.close()
+
+COLOR_FONDO = "#FFFFFF"
+COLOR_SECCION = "#A5D3FB"
+COLOR_BOTON = "#004AAD"
+MARCADOR_FECHA = "AAAA-MM-DD"
+
+
+def limpiar_contenedor(contenedor):
+    for widget in contenedor.winfo_children():
+        widget.destroy()
+
+
+def crear_titulo(padre, texto):
+    tk.Label(padre, text=texto, font=("Arial", 20, "bold"),
+             bg=COLOR_FONDO).pack(anchor="w", padx=15, pady=(10, 5))
+
+
+def crear_marco(padre):
+    marco = tk.Frame(padre, bg=COLOR_SECCION)
+    marco.pack(fill="x", padx=15)
+    marco.grid_columnconfigure(0, weight=1, uniform="col")
+    marco.grid_columnconfigure(1, weight=1, uniform="col")
+    return marco
+
+
+def crear_seccion(padre, texto):
+    tk.Label(padre, text=texto, font=("Arial", 16, "bold"),
+             bg=COLOR_FONDO).pack(anchor="w", padx=15, pady=(12, 3))
+    return crear_marco(padre)
+
+
+def crear_campo(marco, texto, fila, columna):
+    tk.Label(marco, text=texto, font=("Arial", 12, "bold"),
+             bg=COLOR_SECCION).grid(row=fila * 2, column=columna, sticky="w", padx=15, pady=(8, 0))
+    entrada = tk.Entry(marco, font=("Arial", 13), relief="flat")
+    entrada.grid(row=fila * 2 + 1, column=columna, sticky="ew", padx=15, pady=(0, 5), ipady=4)
+    return entrada
+
+
+def crear_combo(marco, texto, fila, columna, valores):
+    tk.Label(marco, text=texto, font=("Arial", 12, "bold"),
+             bg=COLOR_SECCION).grid(row=fila * 2, column=columna, sticky="w", padx=15, pady=(8, 0))
+    combo = ttk.Combobox(marco, values=valores, state="readonly", font=("Arial", 13))
+    combo.grid(row=fila * 2 + 1, column=columna, sticky="ew", padx=15, pady=(0, 5), ipady=3)
+    return combo
+
+
+def crear_campo_fecha(marco, texto, fila, columna):
+    entrada = crear_campo(marco, texto, fila, columna)
+    reiniciar_fecha(entrada)
+
+    def al_entrar(evento):
+        if entrada.get() == MARCADOR_FECHA:
+            entrada.delete(0, "end")
+            entrada.config(fg="black")
+
+    def al_salir(evento):
+        if entrada.get() == "":
+            entrada.insert(0, MARCADOR_FECHA)
+            entrada.config(fg="gray")
+
+    entrada.bind("<FocusIn>", al_entrar)
+    entrada.bind("<FocusOut>", al_salir)
+    return entrada
+
+
+def reiniciar_fecha(entrada):
+    entrada.delete(0, "end")
+    entrada.insert(0, MARCADOR_FECHA)
+    entrada.config(fg="gray")
+
+
+def validar_fecha(texto):
+    try:
+        return datetime.strptime(texto.strip(), "%Y-%m-%d").date()
+    except ValueError:
+        return None
+
+
+def crear_botones(padre, comando_limpiar, comando_registrar):
+    marco = tk.Frame(padre, bg=COLOR_FONDO)
+    marco.pack(fill="x", padx=15, pady=15)
+    tk.Button(marco, text="LIMPIAR", font=("Arial", 14, "bold"), bg=COLOR_BOTON, fg="White",
+              activebackground="#003A8A", activeforeground="White", relief="flat",
+              width=18, height=2, command=comando_limpiar).pack(side="left")
+    tk.Button(marco, text="REGISTRAR", font=("Arial", 14, "bold"), bg=COLOR_BOTON, fg="White",
+              activebackground="#003A8A", activeforeground="White", relief="flat",
+              width=18, height=2, command=comando_registrar).pack(side="right")
+
+
+def cargar_hogares():
+    ids = []
+    nombres = []
+    try:
+        filas = consultar("SELECT id_hogar, numero_hogar, nombre_hogar FROM hogar "
+                                   "WHERE estado = 'activo' ORDER BY numero_hogar")
+        for fila in filas:
+            ids.append(fila[0])
+            nombres.append(f"{fila[1]} - {fila[2]}")
+    except pymysql.MySQLError as error:
+        messagebox.showerror("Base de datos", f"No se pudieron cargar los hogares:\n{error}")
+    return ids, nombres
+
 
 def abrir_login():
     global acceso_concedido
