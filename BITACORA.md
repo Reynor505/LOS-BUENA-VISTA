@@ -27,3 +27,9 @@
     -main:sirve para unir los dos modulos haciendo referencia a ellos y a las funciones creadas adentro.
     -login: sirve para verificar si un permiso o un usuario esta registrado en la base de datos.
     -registro: sirve para agregar los datos del participante al SQL
+##26-11-2026
+* se crearon 4 nuevas tablas (departamento, ciudad, zona, calle, número de puerta)
+* se añadieron datos por defecto para las nuevas tablas en el script DATOS_POR_DEFECTO.sql
+* se eliminaron los campos (residencia actual) (dirección) (dirección, zona) de las tablas seguimiento, cuidadora y hogar respectivamente
+* se cambió la disposición de los elementos gráficos en el inicio de sesión se están
+* se añadieron 5 pantallas, y se conectaron a la base de datos 
