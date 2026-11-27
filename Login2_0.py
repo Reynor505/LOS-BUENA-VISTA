@@ -1,100 +1,47 @@
 import tkinter as tk
-from tkinter import messagebox
-from datetime import datetime, timedelta
-from tkinter import ttk
 from PIL import Image, ImageTk
-
+from tkinter import messagebox
+from datetime import datetime,timedelta
 import hashlib
 import pymysql
+import Conexion                          
 
-acceso_concedido = False
+acceso_concedido=False
 
-HOST = "localhost"
-USUARIO = "root"
-CONTRASENA = "denil"
-BASE_DE_DATOS = "aldeas_sos"
-
-
-def conectar():
-    return pymysql.connect(host=HOST,
-                           user=USUARIO,
-                           password=CONTRASENA,
-                           database=BASE_DE_DATOS,
-                           charset="utf8mb4")
-
-
-def probar_conexion():
+def validar_usuario(nombre_usuario,contra):
     try:
-        con = conectar()
-        con.close()
-        return True, "Conexión exitosa con la base de datos aldeas_sos"
+        conex=Conexion.conectar()
     except pymysql.MySQLError as error:
-        return False, f"No se pudo conectar:\n{error}"
-
-
-def consultar(sql, datos=()):
-    con = conectar()
+        return False,f"LA CONEXION CON LA BASE DE DATOS FALLO \n {error}"
     try:
-        cursor = con.cursor()
-        cursor.execute(sql, datos)
-        filas = cursor.fetchall()
-        cursor.close()
-        return filas
-    finally:
-        con.close()
-
-
-def mensaje_error(error):
-    codigo = 0
-    if len(error.args) > 0 and isinstance(error.args[0], int):
-        codigo = error.args[0]
-
-    if codigo == 1062:
-        return "Ya existe un registro con esos datos (CI, número o nombre repetido)."
-    if codigo in (3819, 4025):
-        return "Algún dato no cumple las reglas de la base de datos (revisa fechas, sexo y capacidad)."
-    if codigo in (1054, 1048):
-        return ("La estructura de la base de datos no coincide con el programa.\n"
-                "Ejecuta el archivo cambios_base_datos.sql en MySQL Workbench.\n\n" + str(error))
-    return str(error)
-
-
-def validar_usuario(nombre_usuario, contrasena):
-    try:
-        con =conectar()
-    except pymysql.MySQLError as error:
-        return False, f"No se pudo conectar con la base de datos:\n{error}"
-
-    try:
-        cursor = con.cursor()
+        cursor=conex.cursor()
         cursor.execute("SELECT id_usuario, contrasena_hash, intentos_fallidos, bloqueo_hasta, estado "
-                       "FROM usuario WHERE nombre_usuario = %s", (nombre_usuario,))
-        fila = cursor.fetchone()
+                       "FROM usuario WHERE nombre_usuario = %s",(nombre_usuario,))
+        fila=cursor.fetchone()
 
         if fila is None:
-            return False, "Usuario o contraseña incorrectos."
-
-        id_usuario, hash_guardado, intentos, bloqueo_hasta, estado = fila
-        ahora = datetime.now()
+            return False, "Usuario o Contraseña Incorrectos"
+        
+        id_usuario,has_guardado,intentos,bloqueo_hasta,estado=fila
+        ahora=datetime.now()
 
         if estado != "activo":
-            return False, "El usuario está inactivo. Habla con el administrador."
-
+            return False,"Usuario Inactivo No Puede Realizar Acciones"
         if bloqueo_hasta is not None and bloqueo_hasta > ahora:
             segundos = int((bloqueo_hasta - ahora).total_seconds()) + 1
             cursor.execute("INSERT INTO registro_acceso (id_usuario, resultado) VALUES (%s, 'bloqueado')",
                            (id_usuario,))
-            con.commit()
+            conex.commit()
             return False, f"Usuario bloqueado. Intenta de nuevo en {segundos} segundos."
 
-        hash_ingresado = hashlib.sha256(contrasena.encode("utf-8")).hexdigest()
+        hash_ingresado = hashlib.sha256(contra.encode("utf-8")).hexdigest()
 
-        if hash_ingresado == hash_guardado.lower():
+        if hash_ingresado == has_guardado.lower():
             cursor.execute("UPDATE usuario SET intentos_fallidos = 0, bloqueo_hasta = NULL "
                            "WHERE id_usuario = %s", (id_usuario,))
             cursor.execute("INSERT INTO registro_acceso (id_usuario, resultado) VALUES (%s, 'exitoso')",
                            (id_usuario,))
-            con.commit()
+            conex.commit()
             return True, "Bienvenido"
 
         intentos = intentos + 1
@@ -109,120 +56,48 @@ def validar_usuario(nombre_usuario, contrasena):
             mensaje = f"Usuario o contraseña incorrectos. Intento {intentos} de 3."
         cursor.execute("INSERT INTO registro_acceso (id_usuario, resultado) VALUES (%s, 'fallido')",
                        (id_usuario,))
-        con.commit()
+        conex.commit()
         return False, mensaje
 
     except pymysql.MySQLError as error:
         return False, f"Error en la base de datos:\n{error}"
     finally:
-        con.close()
+        conex.close()
 
-COLOR_FONDO = "#FFFFFF"
-COLOR_SECCION = "#A5D3FB"
-COLOR_BOTON = "#004AAD"
-MARCADOR_FECHA = "AAAA-MM-DD"
-
-
-def limpiar_contenedor(contenedor):
-    for widget in contenedor.winfo_children():
-        widget.destroy()
-
-
-def crear_titulo(padre, texto):
-    tk.Label(padre, text=texto, font=("Arial", 20, "bold"),
-             bg=COLOR_FONDO).pack(anchor="w", padx=15, pady=(10, 5))
-
-
-def crear_marco(padre):
-    marco = tk.Frame(padre, bg=COLOR_SECCION)
-    marco.pack(fill="x", padx=15)
-    marco.grid_columnconfigure(0, weight=1, uniform="col")
-    marco.grid_columnconfigure(1, weight=1, uniform="col")
-    return marco
-
-
-def crear_seccion(padre, texto):
-    tk.Label(padre, text=texto, font=("Arial", 16, "bold"),
-             bg=COLOR_FONDO).pack(anchor="w", padx=15, pady=(12, 3))
-    return crear_marco(padre)
-
-
-def crear_campo(marco, texto, fila, columna):
-    tk.Label(marco, text=texto, font=("Arial", 12, "bold"),
-             bg=COLOR_SECCION).grid(row=fila * 2, column=columna, sticky="w", padx=15, pady=(8, 0))
-    entrada = tk.Entry(marco, font=("Arial", 13), relief="flat")
-    entrada.grid(row=fila * 2 + 1, column=columna, sticky="ew", padx=15, pady=(0, 5), ipady=4)
-    return entrada
-
-
-def crear_combo(marco, texto, fila, columna, valores):
-    tk.Label(marco, text=texto, font=("Arial", 12, "bold"),
-             bg=COLOR_SECCION).grid(row=fila * 2, column=columna, sticky="w", padx=15, pady=(8, 0))
-    combo = ttk.Combobox(marco, values=valores, state="readonly", font=("Arial", 13))
-    combo.grid(row=fila * 2 + 1, column=columna, sticky="ew", padx=15, pady=(0, 5), ipady=3)
-    return combo
-
-
-def crear_campo_fecha(marco, texto, fila, columna):
-    entrada = crear_campo(marco, texto, fila, columna)
-    reiniciar_fecha(entrada)
-
-    def al_entrar(evento):
-        if entrada.get() == MARCADOR_FECHA:
-            entrada.delete(0, "end")
-            entrada.config(fg="black")
-
-    def al_salir(evento):
-        if entrada.get() == "":
-            entrada.insert(0, MARCADOR_FECHA)
-            entrada.config(fg="gray")
-
-    entrada.bind("<FocusIn>", al_entrar)
-    entrada.bind("<FocusOut>", al_salir)
-    return entrada
-
-
-def reiniciar_fecha(entrada):
-    entrada.delete(0, "end")
-    entrada.insert(0, MARCADOR_FECHA)
-    entrada.config(fg="gray")
-
-
-def validar_fecha(texto):
-    try:
-        return datetime.strptime(texto.strip(), "%Y-%m-%d").date()
-    except ValueError:
-        return None
-
-
-def crear_botones(padre, comando_limpiar, comando_registrar):
-    marco = tk.Frame(padre, bg=COLOR_FONDO)
-    marco.pack(fill="x", padx=15, pady=15)
-    tk.Button(marco, text="LIMPIAR", font=("Arial", 14, "bold"), bg=COLOR_BOTON, fg="White",
-              activebackground="#003A8A", activeforeground="White", relief="flat",
-              width=18, height=2, command=comando_limpiar).pack(side="left")
-    tk.Button(marco, text="REGISTRAR", font=("Arial", 14, "bold"), bg=COLOR_BOTON, fg="White",
-              activebackground="#003A8A", activeforeground="White", relief="flat",
-              width=18, height=2, command=comando_registrar).pack(side="right")
-
-
-def cargar_hogares():
-    ids = []
-    nombres = []
-    try:
-        filas = consultar("SELECT id_hogar, numero_hogar, nombre_hogar FROM hogar "
-                                   "WHERE estado = 'activo' ORDER BY numero_hogar")
-        for fila in filas:
-            ids.append(fila[0])
-            nombres.append(f"{fila[1]} - {fila[2]}")
-    except pymysql.MySQLError as error:
-        messagebox.showerror("Base de datos", f"No se pudieron cargar los hogares:\n{error}")
-    return ids, nombres
+def conectar_db():
+    valor,mensaje=Conexion.comprobar_conexion()
+    if valor:
+        messagebox.showinfo("CONEXION DE DATOS", mensaje)
+    else:
+        messagebox.showerror("CONEXION DE DATOS", mensaje)
 
 
 def abrir_login():
     global acceso_concedido
-    acceso_concedido = False
+    acceso_concedido=False
+
+    def mostrar_contra_entry():
+        if mostrar_contra.get():
+            Contra_Entry.config(show="")
+        else:
+            Contra_Entry.config(show="*")
+
+    def iniciar_sesion():
+        global acceso_concedido
+        usuario=Usuario_Entry.get().strip()
+        contra=Contra_Entry.get()
+
+        if usuario=="" or contra=="":
+            messagebox.showwarning("INICIO DE SESION","Escribe tu usuario y tu contraseña.")
+            return
+
+        valor,mensaje=validar_usuario(usuario,contra)
+        if valor:
+            acceso_concedido=True
+            ventana.destroy()
+        else:
+            messagebox.showerror("INICIO DE SESION",mensaje)
+            Contra_Entry.delete(0,"end")
 
     ventana=tk.Tk()
     ventana.title("Login")
@@ -237,7 +112,7 @@ def abrir_login():
     panel_inferior.pack_propagate(False)
     panel_inferior.pack(side="bottom",fill="x")
 
-    panel_derecho=tk.Frame(ventana,bg="#C3F6FF",width=500,height=20)
+    panel_derecho=tk.Frame(ventana,bg="#83dbf8",width=500,height=20)
     panel_derecho.pack_propagate(False)
     panel_derecho.pack(side="right",fill="y",padx=(0,29))
 
@@ -246,72 +121,44 @@ def abrir_login():
     panel_izquierdo.pack(side="left",expand=True,fill="both")
 
     #Panel Superior
+
     Abrir_logo_Aldeas_sos=Image.open("LOGO_ALDEAS_SOS.jpg")
     Logo_Aldeas_Redimensionada=Abrir_logo_Aldeas_sos.resize((900,200))
+
     Logo_Aldeas=ImageTk.PhotoImage(Logo_Aldeas_Redimensionada)
+
     tk.Label(Panel_superior,image=Logo_Aldeas,bd=0,highlightthickness=0).pack(side="left")
-    
-    #PanelDerecho(Inicio de Sesion)
 
-    def iniciar_sesion():
-        global acceso_concedido
-        usuario = Usuario_Entry.get().strip()
-        contra = Contra_Entry.get()
-
-        if usuario == "" or contra == "":
-            messagebox.showwarning("Inicio de sesión", "Escribe tu usuario y tu contraseña.")
-            return
-
-        correcto, mensaje = validar_usuario(usuario, contra)
-        if correcto:
-            acceso_concedido = True
-            ventana.destroy()         
-        else:
-            messagebox.showerror("Inicio de sesión", mensaje)
-            Contra_Entry.delete(0, "end")
-
-    def conectar_base_de_datos():
-        correcto, mensaje =probar_conexion()
-        if correcto:
-            messagebox.showinfo("Base de datos", mensaje)
-        else:
-            messagebox.showerror("Base de datos", mensaje)
-
-    def mostrar_contrasena():
-        if ver_contra.get():
-            Contra_Entry.config(show="")
-        else:
-            Contra_Entry.config(show="*")
-
+    #Panel_Derecho(Inicio de Sesion)
     tk.Label(panel_derecho, text="INICIO DE SESION",font=("Segoe UI",30,"bold"),
-             bg="#C3F6FF",fg="Black").pack(padx=15,anchor="nw",pady=(0,20))
+            bg="#83dbf8",fg="Black").pack(padx=15,anchor="nw",pady=(0,20))
 
     tk.Label(panel_derecho,text="USUARIO",font=("Segoe UI",23,"bold"),
-             bg="#C3F6FF",fg="Black").pack(padx=15,anchor="nw")
+            bg="#83dbf8",fg="Black").pack(padx=15,anchor="nw")
 
-    Usuario_Entry=tk.Entry(panel_derecho,bg="#D7DCE5",relief="solid",bd=1,font=("Segoe UI",20))
+    Usuario_Entry=tk.Entry(panel_derecho,bg="#fdf7f7",relief="solid",bd=1,font=("Segoe UI",20))
     Usuario_Entry.pack(padx=15,fill="x",ipady=15)
 
     tk.Label(panel_derecho,text="CONTRASEÑA",font=("Segoe UI",23,"bold"),
-             bg="#C3F6FF",fg="Black").pack(padx=15,anchor="nw")
+            bg="#83dbf8",fg="Black").pack(padx=15,anchor="nw")
 
-    Contra_Entry=tk.Entry(panel_derecho,bg="#D7DCE5",relief="solid",bd=1,font=("Segoe UI",20),show="*")
+    Contra_Entry=tk.Entry(panel_derecho,bg="#fdf7f7",relief="solid",bd=1,font=("Segoe UI",20),show="*")
     Contra_Entry.pack(padx=15,ipady=15,fill="x")
 
-    ver_contra = tk.BooleanVar(value=False)
-    tk.Checkbutton(panel_derecho,text="MOSTRAR",variable=ver_contra,command=mostrar_contrasena,
-                   font=("Segoe UI",19,"bold"),bg="#C3F6FF",activebackground="#C3F6FF",
-                   fg="Black").pack(anchor="nw",padx=15)
+    mostrar_contra=tk.BooleanVar(value=False)
+    tk.Checkbutton(panel_derecho,variable=mostrar_contra,text="MOSTRAR",font=("Segoe UI",20,"bold"),bg="#83dbf8",
+                fg="Black",activebackground="#83dbf8",command=mostrar_contra_entry).pack(anchor="nw",padx=15)
 
-    Iniciar_Sesion=tk.Button(panel_derecho,text="INICIAR SESION",font=("Segoe UI",19,"bold"),bg="#1F2937",
-                             fg="White",command=iniciar_sesion)
-    Iniciar_Sesion.pack(fill="x",padx=15,pady=(15,0))
+    Iniciar_Sesion=tk.Button(panel_derecho,text="Iniciar Sesion",font=("Segoe UI",19,"bold"),bg="#0A1648",
+                            fg="White",command=iniciar_sesion)
+    Iniciar_Sesion.pack(fill="x",padx=15,pady=(10,0))
 
-    Conectar_Base_De_Datos=tk.Button(panel_derecho,text="CONECTAR CON LA BASE DE DATOS",font=("Segoe UI",15,"bold"),
-                                     bg="#1F2937",fg="White",command=conectar_base_de_datos)
+    Conectar_Base_De_Datos=tk.Button(panel_derecho,text="COMPROBAR BASE DE DATOS",font=("Segoe UI",19,"bold"),bg="#0A1648",
+                            fg="White",command=conectar_db)
+
     Conectar_Base_De_Datos.pack(fill="x",padx=15,pady=(15,0))
 
-    ventana.bind("<Return>", lambda evento: iniciar_sesion())
+    ventana.bind("<Return>",lambda evento: iniciar_sesion())
 
     ventana.mainloop()
-    return acceso_concedido
+    return acceso_concedido 
