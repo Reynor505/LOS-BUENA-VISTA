@@ -7,10 +7,22 @@ import Conexion
 
 COLOR_FONDO = "#FFFFFF"
 COLOR_MENU = "#1F2B3A"
-COLOR_SECCION = "#A5D3FB"
+COLOR_SECCION = "#D6EBFF"
+COLOR_BORDE_SECCION = "#A5D3FB"
+COLOR_BORDE_CAMPO = "#CBD5E1"
+COLOR_TEXTO = "#1E293B"
 COLOR_BOTON = "#004AAD"
+COLOR_BOTON_HOVER = "#003A8A"
 MARCADOR_FECHA = "AAAA-MM-DD"
 MAX_CUIDADORAS = 3
+FUENTE = "Segoe UI"
+
+
+def centrar_ventana(ventana, ancho, alto):
+    ventana.update_idletasks()
+    x = max(0, (ventana.winfo_screenwidth() - ancho) // 2)
+    y = max(0, (ventana.winfo_screenheight() - alto) // 2)
+    ventana.geometry(f"{ancho}x{alto}+{x}+{y}")
 
 
 def limpiar_contenedor(contenedor):
@@ -19,38 +31,40 @@ def limpiar_contenedor(contenedor):
 
 
 def crear_titulo(padre, texto):
-    tk.Label(padre, text=texto, font=("Arial", 20, "bold"),
-             bg=COLOR_FONDO).pack(anchor="w", padx=15, pady=(10, 5))
+    tk.Label(padre, text=texto, font=(FUENTE, 20, "bold"),
+             bg=COLOR_FONDO, fg=COLOR_MENU).pack(anchor="w", padx=20, pady=(16, 8))
 
 
 def crear_marco(padre):
-    marco = tk.Frame(padre, bg=COLOR_SECCION)
-    marco.pack(fill="x", padx=15)
+    marco = tk.Frame(padre, bg=COLOR_SECCION, highlightbackground=COLOR_BORDE_SECCION, highlightthickness=1)
+    marco.pack(fill="x", padx=20, pady=(0, 6))
     marco.grid_columnconfigure(0, weight=1, uniform="col")
     marco.grid_columnconfigure(1, weight=1, uniform="col")
     return marco
 
 
 def crear_seccion(padre, texto):
-
-    tk.Label(padre, text=texto, font=("Arial", 16, "bold"),
-             bg=COLOR_FONDO).pack(anchor="w", padx=15, pady=(12, 3))
+    tk.Label(padre, text=texto, font=(FUENTE, 13, "bold"),
+             bg=COLOR_FONDO, fg=COLOR_BOTON).pack(anchor="w", padx=20, pady=(12, 4))
     return crear_marco(padre)
 
 
 def crear_campo(marco, texto, fila, columna):
-    tk.Label(marco, text=texto, font=("Arial", 12, "bold"),
-             bg=COLOR_SECCION).grid(row=fila * 2, column=columna, sticky="w", padx=15, pady=(8, 0))
-    entrada = tk.Entry(marco, font=("Arial", 13), relief="flat")
-    entrada.grid(row=fila * 2 + 1, column=columna, sticky="ew", padx=15, pady=(0, 5), ipady=4)
+    tk.Label(marco, text=texto, font=(FUENTE, 10, "bold"),
+             bg=COLOR_SECCION, fg=COLOR_TEXTO).grid(row=fila * 2, column=columna, sticky="w", padx=15, pady=(8, 2))
+    entrada = tk.Entry(marco, font=(FUENTE, 11), relief="flat", bg="#FFFFFF", fg=COLOR_TEXTO,
+                       highlightthickness=1, highlightbackground=COLOR_BORDE_CAMPO, highlightcolor=COLOR_BOTON)
+    entrada.grid(row=fila * 2 + 1, column=columna, sticky="ew", padx=15, pady=(0, 8), ipady=5)
     return entrada
 
 
 def crear_combo(marco, texto, fila, columna, valores):
-    tk.Label(marco, text=texto, font=("Arial", 12, "bold"),
-             bg=COLOR_SECCION).grid(row=fila * 2, column=columna, sticky="w", padx=15, pady=(8, 0))
-    combo = ttk.Combobox(marco, values=valores, state="readonly", font=("Arial", 13))
-    combo.grid(row=fila * 2 + 1, column=columna, sticky="ew", padx=15, pady=(0, 5), ipady=3)
+    estilo = ttk.Style()
+    estilo.configure("TCombobox", padding=4)
+    tk.Label(marco, text=texto, font=(FUENTE, 10, "bold"),
+             bg=COLOR_SECCION, fg=COLOR_TEXTO).grid(row=fila * 2, column=columna, sticky="w", padx=15, pady=(8, 2))
+    combo = ttk.Combobox(marco, values=valores, state="readonly", font=(FUENTE, 11))
+    combo.grid(row=fila * 2 + 1, column=columna, sticky="ew", padx=15, pady=(0, 8), ipady=3)
     return combo
 
 
@@ -87,18 +101,23 @@ def validar_fecha(texto):
 
 def crear_boton_registrar(padre, comando_registrar):
     marco = tk.Frame(padre, bg=COLOR_FONDO)
-    marco.pack(fill="x", padx=15, pady=15)
-    tk.Button(marco, text="REGISTRAR", font=("Arial", 14, "bold"), bg=COLOR_BOTON, fg="White",
-              activebackground="#003A8A", activeforeground="White", relief="flat",
-              width=18, height=2, command=comando_registrar).pack(side="right")
+    marco.pack(fill="x", padx=20, pady=15)
+    boton = tk.Button(marco, text="REGISTRAR", font=(FUENTE, 12, "bold"), bg=COLOR_BOTON, fg="White",
+                      activebackground=COLOR_BOTON_HOVER, activeforeground="White", relief="flat",
+                      cursor="hand2", padx=28, pady=10, command=comando_registrar)
+    boton.pack(side="right")
+    boton.bind("<Enter>", lambda e: boton.config(bg=COLOR_BOTON_HOVER))
+    boton.bind("<Leave>", lambda e: boton.config(bg=COLOR_BOTON))
+
 
 def crear_barra_busqueda(padre):
     barra = tk.Frame(padre, bg=COLOR_MENU)
-    barra.pack(fill="x", padx=15)
-    tk.Label(barra, text="BUSCAR", font=("Arial", 14, "bold"), bg=COLOR_MENU,
-             fg="White").pack(anchor="w", padx=20, pady=(15, 3))
-    entrada = tk.Entry(barra, font=("Arial", 13), relief="flat", width=40)
-    entrada.pack(anchor="w", padx=20, pady=(0, 15), ipady=5)
+    barra.pack(fill="x", padx=20, pady=(0, 10))
+    tk.Label(barra, text="BUSCAR", font=(FUENTE, 11, "bold"), bg=COLOR_MENU,
+             fg="White").pack(side="left", padx=(18, 12), pady=14)
+    entrada = tk.Entry(barra, font=(FUENTE, 12), relief="flat", width=42, bg="#FFFFFF", fg=COLOR_TEXTO,
+                       highlightthickness=1, highlightbackground=COLOR_BORDE_CAMPO, highlightcolor="#7CCFF1")
+    entrada.pack(side="left", padx=(0, 18), pady=14, ipady=5)
     return entrada
 
 

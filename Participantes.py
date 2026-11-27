@@ -25,8 +25,11 @@ def mostrar(contenedor):
     combo_hogar = Componentes.crear_combo(marco2, "HOGAR ASIGNADO", 1, 0, nombres_hogares)
 
     marco3 = Componentes.crear_seccion(contenedor, "SITUACION PREVIA")
-    texto_situacion = tk.Text(marco3, height=5, font=("Arial", 12), relief="flat")
-    texto_situacion.grid(row=0, column=0, columnspan=2, sticky="ew", padx=15, pady=10)
+    texto_situacion = tk.Text(marco3, height=4, font=(Componentes.FUENTE, 11), relief="flat",
+                              wrap="word", bg="#FFFFFF", fg=Componentes.COLOR_TEXTO,
+                              highlightthickness=1, highlightbackground=Componentes.COLOR_BORDE_CAMPO,
+                              highlightcolor=Componentes.COLOR_BOTON)
+    texto_situacion.grid(row=0, column=0, columnspan=2, sticky="ew", padx=15, pady=12)
 
     def limpiar():
         entrada_nombres.delete(0, "end")
