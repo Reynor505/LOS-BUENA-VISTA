@@ -12,24 +12,27 @@ def mostrar(contenedor):
 
     ids_hogares, nombres_hogares = Componentes.cargar_hogares()
 
-    marco1 = Componentes.crear_marco(contenedor)
+    Componentes.crear_boton_registrar(contenedor, lambda: registrar(), fijo_abajo=True)
+    cuerpo = Componentes.crear_contenedor_desplazable(contenedor)
+
+    marco1 = Componentes.crear_marco(cuerpo)
     entrada_nombres = Componentes.crear_campo(marco1, "NOMBRES", 0, 0)
     entrada_apellidos = Componentes.crear_campo(marco1, "APELLIDOS", 0, 1)
     entrada_ci = Componentes.crear_campo(marco1, "CARNET DE IDENTIDAD - CI", 1, 0)
     entrada_nacimiento = Componentes.crear_campo_fecha(marco1, "FECHA DE NACIMIENTO", 1, 1)
     combo_sexo = Componentes.crear_combo(marco1, "SEXO", 2, 0, ["M - Masculino", "F - Femenino"])
 
-    marco2 = Componentes.crear_seccion(contenedor, "ASIGNACION DE HOGAR")
+    marco2 = Componentes.crear_seccion(cuerpo, "ASIGNACION DE HOGAR")
     entrada_ingreso_sistema = Componentes.crear_campo_fecha(marco2, "FECHA DE INGRESO-SISTEMA", 0, 0)
     entrada_ingreso_hogar = Componentes.crear_campo_fecha(marco2, "FECHA DE INGRESO AL HOGAR", 0, 1)
     combo_hogar = Componentes.crear_combo(marco2, "HOGAR ASIGNADO", 1, 0, nombres_hogares)
 
-    marco3 = Componentes.crear_seccion(contenedor, "SITUACION PREVIA")
-    texto_situacion = tk.Text(marco3, height=4, font=(Componentes.FUENTE, 11), relief="flat",
+    marco3 = Componentes.crear_seccion(cuerpo, "SITUACION PREVIA")
+    texto_situacion = tk.Text(marco3, height=3, font=(Componentes.FUENTE, 11), relief="flat",
                               wrap="word", bg="#FFFFFF", fg=Componentes.COLOR_TEXTO,
                               highlightthickness=1, highlightbackground=Componentes.COLOR_BORDE_CAMPO,
                               highlightcolor=Componentes.COLOR_BOTON)
-    texto_situacion.grid(row=0, column=0, columnspan=2, sticky="ew", padx=15, pady=12)
+    texto_situacion.grid(row=0, column=0, columnspan=2, sticky="ew", padx=15, pady=10)
 
     def limpiar():
         entrada_nombres.delete(0, "end")
@@ -114,5 +117,3 @@ def mostrar(contenedor):
             messagebox.showerror("Error al registrar", Conexion.mensaje_error(error))
         finally:
             conex.close()
-
-    Componentes.crear_boton_registrar(contenedor, registrar)

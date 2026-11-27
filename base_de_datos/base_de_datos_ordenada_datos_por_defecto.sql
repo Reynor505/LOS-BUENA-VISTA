@@ -12,7 +12,6 @@ CREATE TABLE permiso (
     id_permiso INT AUTO_INCREMENT PRIMARY KEY,
     nombre VARCHAR(40) NOT NULL,
     descripcion VARCHAR(75) NOT NULL,
-
     CONSTRAINT uq_permiso_nombre UNIQUE (nombre)
 );
 
@@ -153,8 +152,6 @@ CREATE TABLE participantes (
     ci VARCHAR(10) NOT NULL UNIQUE,
     sexo CHAR(1) NOT NULL,
     fecha_de_ingreso DATE NOT NULL,
-    id_usuario INT NOT NULL,                                   
-    FOREIGN KEY (id_usuario) REFERENCES usuario(id_usuario),
     CONSTRAINT uq_participante UNIQUE (nombre, apellido, fecha_de_nacimiento),
     CONSTRAINT ck_part_nombre CHECK (TRIM(nombre) <> '' AND TRIM(apellido) <> ''),
     CONSTRAINT ck_part_sexo CHECK (sexo IN ('M', 'F')),
