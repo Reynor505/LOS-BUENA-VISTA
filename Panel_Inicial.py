@@ -21,13 +21,11 @@ COLOR_TARJETA = "#F1F5F9"
 COLORES_ACENTO = ["#004AAD", "#009FE3", "#1F2B3A", "#0284C7"]
 
 
-def calcular_estadisticas_markov():
-    """Calcula las matrices M1 (edades), C (cupos) y la cadena de Markov usando math."""
+def calcular_estadisticas():
+    """Calcula las matrices M1 (edades) y C (cupos) usando math."""
     hoy = date.today()
     hogares_rows = []
     part_rows = []
-    asig_rows = []
-    egresos_total = 0
     try:
         hogares_rows = Conexion.consultar(
             "SELECT h.id_hogar, h.numero_hogar, h.nombre_hogar, h.capacidad, "
@@ -38,8 +36,6 @@ def calcular_estadisticas_markov():
             "FROM participantes p "
             "JOIN asignacion_hogar a ON a.id_participante = p.id_participante AND a.fecha_fin IS NULL "
             "WHERE p.id_participante NOT IN (SELECT id_participante FROM egreso)")
-        asig_rows = Conexion.consultar("SELECT fecha_fin FROM asignacion_hogar")
-        egresos_total = Conexion.consultar("SELECT COUNT(*) FROM egreso")[0][0]
     except pymysql.MySQLError:
         pass
 
@@ -65,36 +61,6 @@ def calcular_estadisticas_markov():
     porc_ocupacion = round((ocu_total / cap_total) * 100, 2) if cap_total > 0 else 0.0
     porc_disponible = round((disp_total / cap_total) * 100, 2) if cap_total > 0 else 0.0
 
-    # Cadena de Markov: estados [En Hogar, Traslado, Egreso]
-    activas = sum(1 for (ffin,) in asig_rows if ffin is None)
-    cerradas = sum(1 for (ffin,) in asig_rows if ffin is not None)
-    traslados = max(0, cerradas - egresos_total)
-    total_eventos = activas + traslados + egresos_total
-
-    if total_eventos > 0:
-        v0 = [activas / total_eventos, traslados / total_eventos, egresos_total / total_eventos]
-        denom_hogar = activas + traslados + egresos_total
-        p_stay = activas / denom_hogar
-        p_move = traslados / denom_hogar
-        p_exit = egresos_total / denom_hogar
-    else:
-        v0 = [1.0, 0.0, 0.0]
-        p_stay, p_move, p_exit = 0.85, 0.10, 0.05
-
-    matriz_transicion = [
-        [p_stay, p_move, p_exit],
-        [0.75, 0.10, 0.15],
-        [0.0, 0.0, 1.0],
-    ]
-
-    # Proyeccion de Markov v_k = v_0 * T^3
-    vector = list(v0)
-    for _ in range(3):
-        siguiente = []
-        for col in range(3):
-            siguiente.append(math.fsum(vector[fil] * matriz_transicion[fil][col] for fil in range(3)))
-        vector = siguiente
-
     datos_hogares = [
         (h[1], h[2], int(h[3]), int(h[4]), max(0, int(h[3]) - int(h[4])))
         for h in hogares_rows
@@ -108,8 +74,6 @@ def calcular_estadisticas_markov():
         "cap_total": cap_total,
         "ocu_total": ocu_total,
         "disp_total": disp_total,
-        "markov_actual": [round(x * 100, 1) for x in v0],
-        "markov_proyeccion": [round(x * 100, 1) for x in vector],
         "hogares": datos_hogares,
     }
 
@@ -220,7 +184,7 @@ def mostrar_resumen(contenedor):
         tk.Label(tarjeta, text=str(numero), font=("Segoe UI", 34, "bold"),
                  bg=COLOR_TARJETA, fg=COLORES_ACENTO[i]).pack(expand=True)
 
-    estadisticas = calcular_estadisticas_markov()
+    estadisticas = calcular_estadisticas()
 
     panel_inferior = tk.Frame(contenedor, bg="White")
     panel_inferior.pack(fill="both", expand=True, padx=20, pady=(4, 16))
@@ -228,34 +192,19 @@ def mostrar_resumen(contenedor):
     panel_inferior.grid_columnconfigure(1, weight=1, uniform="panel_inf")
     panel_inferior.grid_rowconfigure(0, weight=1)
 
-    # Lado izquierdo abajo: SOLO gráficos en Canvas (barras con matrices M1, C y Markov)
+    # Lado izquierdo abajo: Gráfico en Canvas (barras con matrices M1 y C)
     marco_graficos = tk.Frame(panel_inferior, bg="#F8FAFC", highlightbackground="#CBD5E1", highlightthickness=1)
     marco_graficos.grid(row=0, column=0, sticky="nsew", padx=(0, 8))
 
     canvas_m1_c = tk.Canvas(marco_graficos, bg="#F8FAFC", highlightthickness=0)
-    canvas_m1_c.pack(fill="both", expand=True, padx=6, pady=(6, 2))
-
-    canvas_markov = tk.Canvas(marco_graficos, bg="#F8FAFC", highlightthickness=0)
-    canvas_markov.pack(fill="both", expand=True, padx=6, pady=(2, 6))
+    canvas_m1_c.pack(fill="both", expand=True, padx=6, pady=6)
 
     etiquetas_1 = ["0-5\naños", "6-11\naños", "12-17\naños", "Ocupado\n(C)", "Disp.\n(C)"]
     valores_1 = estadisticas["porc_rango"] + [estadisticas["porc_ocupacion"], estadisticas["porc_disponible"]]
     colores_1 = ["#004AAD", "#009FE3", "#0284C7", "#1F2B3A", "#15803D"]
 
-    etiquetas_2 = ["En Hogar\n(t0)", "Traslado\n(t0)", "Egreso\n(t0)", "En Hogar\n(t3)", "Egreso\n(t3)"]
-    valores_2 = [
-        estadisticas["markov_actual"][0],
-        estadisticas["markov_actual"][1],
-        estadisticas["markov_actual"][2],
-        estadisticas["markov_proyeccion"][0],
-        estadisticas["markov_proyeccion"][2],
-    ]
-    colores_2 = ["#004AAD", "#009FE3", "#B91C1C", "#1D4ED8", "#991B1B"]
-
     canvas_m1_c.bind("<Configure>", lambda e: _dibujar_barras_canvas(
         canvas_m1_c, "M₁ (Rango Edad) y C (Cupos %)", etiquetas_1, valores_1, colores_1))
-    canvas_markov.bind("<Configure>", lambda e: _dibujar_barras_canvas(
-        canvas_markov, "Cadena de Markov: Estado Actual vs Proyección (%)", etiquetas_2, valores_2, colores_2))
 
     # Lado derecho abajo: Tabla de capacidad por hogar O Registro de accesos si es Administrador
     marco_derecho = tk.Frame(panel_inferior, bg="White", highlightbackground="#CBD5E1", highlightthickness=1)

@@ -38,7 +38,3 @@
 * se añadieron datos por defecto para las nuevas tablas en el script DATOS_POR_DEFECTO.sql
 * se eliminaron los campos (residencia actual) (dirección) (dirección, zona) de las tablas seguimiento, cuidadora y hogar respectivamente
 * se añadieron 5 pantallas, y se conectaron a la base de datos 
-##  27-11-2026
-* se modifico el sistema agregando un cierre de sesion 
-* se modifico la configuracion a la base de datos 
-* se creo mejora la interfaz grafica 
