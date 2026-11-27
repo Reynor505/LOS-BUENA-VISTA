@@ -99,26 +99,107 @@ def validar_fecha(texto):
     except ValueError:
         return None
 
-def crear_boton_registrar(padre, comando_registrar):
+def crear_boton_registrar(padre, comando_registrar, fijo_abajo=False):
     marco = tk.Frame(padre, bg=COLOR_FONDO)
-    marco.pack(fill="x", padx=20, pady=15)
+    if fijo_abajo:
+        marco.pack(side="bottom", fill="x", padx=20, pady=12)
+    else:
+        marco.pack(fill="x", padx=20, pady=15)
     boton = tk.Button(marco, text="REGISTRAR", font=(FUENTE, 12, "bold"), bg=COLOR_BOTON, fg="White",
                       activebackground=COLOR_BOTON_HOVER, activeforeground="White", relief="flat",
                       cursor="hand2", padx=28, pady=10, command=comando_registrar)
     boton.pack(side="right")
     boton.bind("<Enter>", lambda e: boton.config(bg=COLOR_BOTON_HOVER))
     boton.bind("<Leave>", lambda e: boton.config(bg=COLOR_BOTON))
+    return boton
 
 
-def crear_barra_busqueda(padre):
+def crear_contenedor_desplazable(padre):
+    contenedor_scroll = tk.Frame(padre, bg=COLOR_FONDO)
+    contenedor_scroll.pack(fill="both", expand=True)
+
+    lienzo = tk.Canvas(contenedor_scroll, bg=COLOR_FONDO, highlightthickness=0)
+    barra = tk.Scrollbar(contenedor_scroll, orient="vertical", command=lienzo.yview)
+    lienzo.configure(yscrollcommand=barra.set)
+
+    barra.pack(side="right", fill="y")
+    lienzo.pack(side="left", fill="both", expand=True)
+
+    interior = tk.Frame(lienzo, bg=COLOR_FONDO)
+    ventana_id = lienzo.create_window((0, 0), window=interior, anchor="nw")
+
+    interior.bind("<Configure>", lambda e: lienzo.configure(scrollregion=lienzo.bbox("all")))
+    lienzo.bind("<Configure>", lambda e: lienzo.itemconfigure(ventana_id, width=e.width))
+
+    def rueda(evento):
+        if lienzo.winfo_exists() and interior.winfo_reqheight() > lienzo.winfo_height():
+            lienzo.yview_scroll(int(-1 * (evento.delta / 120)), "units")
+
+    lienzo.bind("<Enter>", lambda e: lienzo.bind_all("<MouseWheel>", rueda))
+    lienzo.bind("<Leave>", lambda e: lienzo.unbind_all("<MouseWheel>"))
+    lienzo.bind("<Destroy>", lambda e: lienzo.unbind_all("<MouseWheel>"))
+    return interior
+
+
+def agregar_placeholder(entrada, texto_placeholder):
+    entrada._placeholder_texto = texto_placeholder
+    entrada._placeholder_activo = True
+    entrada.delete(0, "end")
+    entrada.insert(0, texto_placeholder)
+    entrada.config(fg="#64748B")
+
+    def al_entrar(evento):
+        if getattr(entrada, "_placeholder_activo", False):
+            entrada.delete(0, "end")
+            entrada.config(fg=COLOR_TEXTO)
+            entrada._placeholder_activo = False
+
+    def al_salir(evento):
+        if entrada.get() == "":
+            entrada._placeholder_activo = True
+            entrada.insert(0, texto_placeholder)
+            entrada.config(fg="#64748B")
+
+    entrada.bind("<FocusIn>", al_entrar)
+    entrada.bind("<FocusOut>", al_salir)
+
+
+def obtener_texto_entrada(entrada):
+    if getattr(entrada, "_placeholder_activo", False):
+        return ""
+    return entrada.get().strip()
+
+
+def crear_barra_busqueda(padre, placeholder=""):
     barra = tk.Frame(padre, bg=COLOR_MENU)
     barra.pack(fill="x", padx=20, pady=(0, 10))
     tk.Label(barra, text="BUSCAR", font=(FUENTE, 11, "bold"), bg=COLOR_MENU,
-             fg="White").pack(side="left", padx=(18, 12), pady=14)
-    entrada = tk.Entry(barra, font=(FUENTE, 12), relief="flat", width=42, bg="#FFFFFF", fg=COLOR_TEXTO,
+             fg="White").pack(side="left", padx=(18, 12), pady=12)
+    entrada = tk.Entry(barra, font=(FUENTE, 12), relief="flat", width=36, bg="#FFFFFF", fg=COLOR_TEXTO,
                        highlightthickness=1, highlightbackground=COLOR_BORDE_CAMPO, highlightcolor="#7CCFF1")
-    entrada.pack(side="left", padx=(0, 18), pady=14, ipady=5)
+    entrada.pack(side="left", padx=(0, 14), pady=12, ipady=5)
+    if placeholder:
+        agregar_placeholder(entrada, placeholder)
     return entrada
+
+
+def crear_barra_filtros(padre):
+    marco = tk.Frame(padre, bg=COLOR_SECCION, highlightbackground=COLOR_BORDE_SECCION, highlightthickness=1)
+    marco.pack(fill="x", padx=20, pady=(0, 10))
+    return marco
+
+
+def agregar_filtro_combo(barra_filtros, texto, valores, ancho=18):
+    estilo = ttk.Style()
+    estilo.configure("TCombobox", padding=3)
+    bloque = tk.Frame(barra_filtros, bg=COLOR_SECCION)
+    bloque.pack(side="left", padx=(12, 6), pady=8)
+    tk.Label(bloque, text=texto, font=(FUENTE, 9, "bold"), bg=COLOR_SECCION, fg=COLOR_TEXTO).pack(anchor="w")
+    combo = ttk.Combobox(bloque, values=valores, state="readonly", font=(FUENTE, 10), width=ancho)
+    if valores:
+        combo.current(0)
+    combo.pack(pady=(2, 0))
+    return combo
 
 
 def cargar_hogares():

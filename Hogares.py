@@ -16,6 +16,7 @@ def mostrar(contenedor):
     combo_zona = Componentes.crear_combo(marco, "ZONA", 2, 0, [])
     combo_calle = Componentes.crear_combo(marco, "CALLE", 2, 1, [])
     entrada_capacidad = Componentes.crear_campo(marco, "CAPACIDAD", 3, 0)
+##esta cosa e para ese menu de seleccionar para que las direcciones tengas correlacion
     obtener_direccion, reiniciar_direccion = Componentes.conectar_direccion(combo_dep, combo_ciudad,
                                                                             combo_zona, combo_calle)
 
@@ -30,7 +31,7 @@ def mostrar(contenedor):
         numero_texto = entrada_numero.get().strip()
         capacidad_texto = entrada_capacidad.get().strip()
         direccion = obtener_direccion()
-
+## validacionews para los campos de registros we xdxd
         if nombre == "" or numero_texto == "" or capacidad_texto == "" or direccion is None:
             messagebox.showwarning("Datos incompletos", "Completa todos los campos antes de registrar.")
             return

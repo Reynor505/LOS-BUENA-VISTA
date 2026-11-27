@@ -11,13 +11,16 @@ def mostrar(contenedor):
 
     ids_hogares, nombres_hogares = Componentes.cargar_hogares()
 
-    marco1 = Componentes.crear_marco(contenedor)
+    Componentes.crear_boton_registrar(contenedor, lambda: registrar(), fijo_abajo=True)
+    cuerpo = Componentes.crear_contenedor_desplazable(contenedor)
+
+    marco1 = Componentes.crear_marco(cuerpo)
     entrada_nombres = Componentes.crear_campo(marco1, "NOMBRES", 0, 0)
     entrada_apellidos = Componentes.crear_campo(marco1, "APELLIDOS", 0, 1)
     entrada_ci = Componentes.crear_campo(marco1, "CARNET DE IDENTIDAD - CI", 1, 0)
     entrada_nacimiento = Componentes.crear_campo_fecha(marco1, "FECHA DE NACIMIENTO", 1, 1)
 
-    marco2 = Componentes.crear_seccion(contenedor, "CONTACTO Y DOMICILIO")
+    marco2 = Componentes.crear_seccion(cuerpo, "CONTACTO Y DOMICILIO")
     entrada_telefono = Componentes.crear_campo(marco2, "TELEFONO", 0, 0)
     combo_dep = Componentes.crear_combo(marco2, "DEPARTAMENTO", 0, 1, [])
     combo_ciudad = Componentes.crear_combo(marco2, "CIUDAD", 1, 0, [])
@@ -27,7 +30,7 @@ def mostrar(contenedor):
     obtener_direccion, reiniciar_direccion = Componentes.conectar_direccion(combo_dep, combo_ciudad,
                                                                             combo_zona, combo_calle)
 
-    marco3 = Componentes.crear_seccion(contenedor, "ASIGNACION DE HOGAR")
+    marco3 = Componentes.crear_seccion(cuerpo, "ASIGNACION DE HOGAR")
     entrada_ingreso_hogar = Componentes.crear_campo_fecha(marco3, "FECHA DE INGRESO AL HOGAR", 0, 0)
     combo_hogar = Componentes.crear_combo(marco3, "HOGAR ASIGNADO", 0, 1, nombres_hogares)
 
@@ -111,5 +114,3 @@ def mostrar(contenedor):
             messagebox.showerror("Error al registrar", Conexion.mensaje_error(error))
         finally:
             conex.close()
-
-    Componentes.crear_boton_registrar(contenedor, registrar)
