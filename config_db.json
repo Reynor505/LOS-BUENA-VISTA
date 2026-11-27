@@ -1,0 +1,7 @@
+{
+  "host": "localhost",
+  "puerto": 3306,
+  "usuario": "root",
+  "contra": "qerurinore31M",
+  "base_de_datos": "aldeas_sos"
+}
