@@ -1,38 +1,41 @@
 from tkinter import messagebox
 import pymysql
-import Login2_0
+import Conexion
+import Componentes
 
 
 def mostrar(contenedor):
-    Login2_0.limpiar_contenedor(contenedor)
-    Login2_0.crear_titulo(contenedor, "AÑADIR NUEVO HOGAR")
+    Componentes.limpiar_contenedor(contenedor)
+    Componentes.crear_titulo(contenedor, "AÑADIR NUEVO HOGAR")
 
-    marco = Login2_0.crear_marco(contenedor)
-    entrada_nombre = Login2_0.crear_campo(marco, "NOMBRE DEL HOGAR", 0, 0)
-    entrada_ubicacion = Login2_0.crear_campo(marco, "UBICACION", 0, 1)
-    entrada_numero = Login2_0.crear_campo(marco, "NUMERO", 1, 0)
-    entrada_capacidad = Login2_0.crear_campo(marco, "CAPACIDAD", 1, 1)
+    marco = Componentes.crear_marco(contenedor)
+    entrada_nombre = Componentes.crear_campo(marco, "NOMBRE DEL HOGAR", 0, 0)
+    combo_dep = Componentes.crear_combo(marco, "DEPARTAMENTO", 0, 1, [])
+    entrada_numero = Componentes.crear_campo(marco, "NUMERO", 1, 0)
+    combo_ciudad = Componentes.crear_combo(marco, "CIUDAD", 1, 1, [])
+    combo_zona = Componentes.crear_combo(marco, "ZONA", 2, 0, [])
+    combo_calle = Componentes.crear_combo(marco, "CALLE", 2, 1, [])
+    entrada_capacidad = Componentes.crear_campo(marco, "CAPACIDAD", 3, 0)
+    obtener_direccion, reiniciar_direccion = Componentes.conectar_direccion(combo_dep, combo_ciudad,
+                                                                            combo_zona, combo_calle)
 
     def limpiar():
         entrada_nombre.delete(0, "end")
-        entrada_ubicacion.delete(0, "end")
         entrada_numero.delete(0, "end")
         entrada_capacidad.delete(0, "end")
+        reiniciar_direccion()
 
     def registrar():
         nombre = entrada_nombre.get().strip()
-        ubicacion = entrada_ubicacion.get().strip()
         numero_texto = entrada_numero.get().strip()
         capacidad_texto = entrada_capacidad.get().strip()
+        direccion = obtener_direccion()
 
-        if nombre == "" or ubicacion == "" or numero_texto == "" or capacidad_texto == "":
+        if nombre == "" or numero_texto == "" or capacidad_texto == "" or direccion is None:
             messagebox.showwarning("Datos incompletos", "Completa todos los campos antes de registrar.")
             return
         if len(nombre) > 40:
             messagebox.showwarning("Datos incorrectos", "El nombre del hogar puede tener máximo 40 caracteres.")
-            return
-        if len(ubicacion) > 50:
-            messagebox.showwarning("Datos incorrectos", "La ubicación puede tener máximo 50 caracteres.")
             return
 
         if not numero_texto.isdigit() or int(numero_texto) <= 0:
@@ -43,24 +46,26 @@ def mostrar(contenedor):
             return
         numero = int(numero_texto)
         capacidad = int(capacidad_texto)
+        id_departamento, id_ciudad, id_zona, id_calle = direccion
 
         try:
-            con = Login2_0.conectar()
+            conex = Conexion.conectar()
         except pymysql.MySQLError as error:
             messagebox.showerror("Base de datos", f"No se pudo conectar:\n{error}")
             return
 
         try:
-            cursor = con.cursor()
-            cursor.execute("INSERT INTO hogar (numero_hogar, nombre_hogar, direccion, capacidad) "
-                           "VALUES (%s, %s, %s, %s)", (numero, nombre, ubicacion, capacidad))
-            con.commit()
+            cursor = conex.cursor()
+            cursor.execute("INSERT INTO hogar (numero_hogar, nombre_hogar, id_departamento, id_ciudad, "
+                           "id_zona, id_calle, capacidad) VALUES (%s, %s, %s, %s, %s, %s, %s)",
+                           (numero, nombre, id_departamento, id_ciudad, id_zona, id_calle, capacidad))
+            conex.commit()
             messagebox.showinfo("Registro exitoso", f"Hogar {numero} - {nombre} registrado.")
             limpiar()
         except pymysql.MySQLError as error:
-            con.rollback()
-            messagebox.showerror("Error al registrar", Login2_0.mensaje_error(error))
+            conex.rollback()
+            messagebox.showerror("Error al registrar", Conexion.mensaje_error(error))
         finally:
-            con.close()
+            conex.close()
 
-    Login2_0.crear_botones(contenedor, limpiar, registrar)
+    Componentes.crear_boton_registrar(contenedor, registrar)

@@ -1,37 +1,44 @@
 from tkinter import messagebox
 from datetime import date
 import pymysql
-import Login2_0
+import Conexion
+import Componentes
 
 
 def mostrar(contenedor):
-    Login2_0.limpiar_contenedor(contenedor)
-    Login2_0.crear_titulo(contenedor, "AÑADIR NUEVA CUIDADORA")
+    Componentes.limpiar_contenedor(contenedor)
+    Componentes.crear_titulo(contenedor, "AÑADIR NUEVA CUIDADORA")
 
-    ids_hogares, nombres_hogares = Login2_0.cargar_hogares()
+    ids_hogares, nombres_hogares = Componentes.cargar_hogares()
 
-    marco1 = Login2_0.crear_marco(contenedor)
-    entrada_nombres = Login2_0.crear_campo(marco1, "NOMBRES", 0, 0)
-    entrada_apellidos = Login2_0.crear_campo(marco1, "APELLIDOS", 0, 1)
-    entrada_ci = Login2_0.crear_campo(marco1, "CARNET DE IDENTIDAD - CI", 1, 0)
-    entrada_nacimiento = Login2_0.crear_campo_fecha(marco1, "FECHA DE NACIMIENTO", 1, 1)
+    marco1 = Componentes.crear_marco(contenedor)
+    entrada_nombres = Componentes.crear_campo(marco1, "NOMBRES", 0, 0)
+    entrada_apellidos = Componentes.crear_campo(marco1, "APELLIDOS", 0, 1)
+    entrada_ci = Componentes.crear_campo(marco1, "CARNET DE IDENTIDAD - CI", 1, 0)
+    entrada_nacimiento = Componentes.crear_campo_fecha(marco1, "FECHA DE NACIMIENTO", 1, 1)
 
-    marco2 = Login2_0.crear_seccion(contenedor, "CONTACTO Y DOMICILIO")
-    entrada_telefono = Login2_0.crear_campo(marco2, "TELEFONO", 0, 0)
-    entrada_direccion = Login2_0.crear_campo(marco2, "DIRECCION", 0, 1)
+    marco2 = Componentes.crear_seccion(contenedor, "CONTACTO Y DOMICILIO")
+    entrada_telefono = Componentes.crear_campo(marco2, "TELEFONO", 0, 0)
+    combo_dep = Componentes.crear_combo(marco2, "DEPARTAMENTO", 0, 1, [])
+    combo_ciudad = Componentes.crear_combo(marco2, "CIUDAD", 1, 0, [])
+    combo_zona = Componentes.crear_combo(marco2, "ZONA", 1, 1, [])
+    combo_calle = Componentes.crear_combo(marco2, "CALLE", 2, 0, [])
 
-    marco3 = Login2_0.crear_seccion(contenedor, "ASIGNACION DE HOGAR")
-    entrada_ingreso_hogar = Login2_0.crear_campo_fecha(marco3, "FECHA DE INGRESO AL HOGAR", 0, 0)
-    combo_hogar = Login2_0.crear_combo(marco3, "HOGAR ASIGNADO", 0, 1, nombres_hogares)
+    obtener_direccion, reiniciar_direccion = Componentes.conectar_direccion(combo_dep, combo_ciudad,
+                                                                            combo_zona, combo_calle)
+
+    marco3 = Componentes.crear_seccion(contenedor, "ASIGNACION DE HOGAR")
+    entrada_ingreso_hogar = Componentes.crear_campo_fecha(marco3, "FECHA DE INGRESO AL HOGAR", 0, 0)
+    combo_hogar = Componentes.crear_combo(marco3, "HOGAR ASIGNADO", 0, 1, nombres_hogares)
 
     def limpiar():
         entrada_nombres.delete(0, "end")
         entrada_apellidos.delete(0, "end")
         entrada_ci.delete(0, "end")
-        Login2_0.reiniciar_fecha(entrada_nacimiento)
+        Componentes.reiniciar_fecha(entrada_nacimiento)
         entrada_telefono.delete(0, "end")
-        entrada_direccion.delete(0, "end")
-        Login2_0.reiniciar_fecha(entrada_ingreso_hogar)
+        reiniciar_direccion()
+        Componentes.reiniciar_fecha(entrada_ingreso_hogar)
         combo_hogar.set("")
 
     def registrar():
@@ -39,10 +46,10 @@ def mostrar(contenedor):
         apellidos = entrada_apellidos.get().strip()
         ci = entrada_ci.get().strip()
         telefono = entrada_telefono.get().strip()
-        direccion = entrada_direccion.get().strip()
+        direccion = obtener_direccion()
         posicion = combo_hogar.current()
 
-        if nombres == "" or apellidos == "" or ci == "" or telefono == "" or direccion == "" or posicion == -1:
+        if nombres == "" or apellidos == "" or ci == "" or telefono == "" or direccion is None or posicion == -1:
             messagebox.showwarning("Datos incompletos", "Completa todos los campos antes de registrar.")
             return
 
@@ -55,48 +62,54 @@ def mostrar(contenedor):
         if len(telefono) > 20:
             messagebox.showwarning("Datos incorrectos", "El teléfono puede tener máximo 20 caracteres.")
             return
-        if len(direccion) > 75:
-            messagebox.showwarning("Datos incorrectos", "La dirección puede tener máximo 75 caracteres.")
-            return
 
         for letra in telefono:
             if not (letra.isdigit() or letra in "+- "):
                 messagebox.showwarning("Datos incorrectos", "El teléfono solo puede tener números, espacios, + y -.")
                 return
 
-        fecha_nacimiento = Login2_0.validar_fecha(entrada_nacimiento.get())
-        fecha_ingreso_hogar = Login2_0.validar_fecha(entrada_ingreso_hogar.get())
-        if fecha_nacimiento is None or fecha_ingreso_hogar is None:
+        fecha_nacimiento = Componentes.validar_fecha(entrada_nacimiento.get())
+        fecha_ingreso = Componentes.validar_fecha(entrada_ingreso_hogar.get())
+        if fecha_nacimiento is None or fecha_ingreso is None:
             messagebox.showwarning("Fecha incorrecta", "Escribe las fechas con el formato AAAA-MM-DD.")
             return
         if fecha_nacimiento > date.today():
             messagebox.showwarning("Fecha incorrecta", "La fecha de nacimiento no puede ser futura.")
             return
-        if fecha_ingreso_hogar < fecha_nacimiento:
+        if fecha_ingreso < fecha_nacimiento:
             messagebox.showwarning("Fecha incorrecta", "El ingreso al hogar no puede ser anterior al nacimiento.")
             return
 
         id_hogar = ids_hogares[posicion]
+        id_departamento, id_ciudad, id_zona, id_calle = direccion
 
         try:
-            con = Login2_0.conectar()
+            conex = Conexion.conectar()
         except pymysql.MySQLError as error:
             messagebox.showerror("Base de datos", f"No se pudo conectar:\n{error}")
             return
 
         try:
-            cursor = con.cursor()
-            cursor.execute("INSERT INTO cuidadora (id_hogar, nombres, apellidos, ci, telefono, direccion, "
-                           "fecha_de_nacimiento, fecha_ingreso_hogar) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
-                           (id_hogar, nombres, apellidos, ci, telefono, direccion,
-                            fecha_nacimiento, fecha_ingreso_hogar))
-            con.commit()
+            cursor = conex.cursor()
+            cursor.execute("SELECT COUNT(*) FROM cuidadora WHERE id_hogar = %s AND estado = 'activo'", (id_hogar,))
+            cantidad = cursor.fetchone()[0]
+            if cantidad >= Componentes.MAX_CUIDADORAS:
+                messagebox.showwarning("Hogar completo",
+                                       f"Ese hogar ya tiene {cantidad} de {Componentes.MAX_CUIDADORAS} cuidadoras.")
+                return
+
+            cursor.execute("INSERT INTO cuidadora (id_hogar, nombres, apellidos, ci, telefono, fecha_nacimiento, "
+                           "fecha_ingreso, id_departamento, id_ciudad, id_zona, id_calle) "
+                           "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+                           (id_hogar, nombres, apellidos, ci, telefono, fecha_nacimiento, fecha_ingreso,
+                            id_departamento, id_ciudad, id_zona, id_calle))
+            conex.commit()
             messagebox.showinfo("Registro exitoso", f"Cuidadora {nombres} {apellidos} registrada.")
             limpiar()
         except pymysql.MySQLError as error:
-            con.rollback()
-            messagebox.showerror("Error al registrar", Login2_0.mensaje_error(error))
+            conex.rollback()
+            messagebox.showerror("Error al registrar", Conexion.mensaje_error(error))
         finally:
-            con.close()
+            conex.close()
 
-    Login2_0.crear_botones(contenedor, limpiar, registrar)
+    Componentes.crear_boton_registrar(contenedor, registrar)

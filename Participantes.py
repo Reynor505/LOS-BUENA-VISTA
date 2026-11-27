@@ -2,28 +2,29 @@ import tkinter as tk
 from tkinter import messagebox
 from datetime import date
 import pymysql
-import Login2_0
+import Conexion
+import Componentes
 
 
 def mostrar(contenedor):
-    Login2_0.limpiar_contenedor(contenedor)
-    Login2_0.crear_titulo(contenedor, "AÑADIR NUEVO PARTICIPANTE")
+    Componentes.limpiar_contenedor(contenedor)
+    Componentes.crear_titulo(contenedor, "AÑADIR NUEVO PARTICIPANTE")
 
-    ids_hogares, nombres_hogares = Login2_0.cargar_hogares()
+    ids_hogares, nombres_hogares = Componentes.cargar_hogares()
 
-    marco1 = Login2_0.crear_marco(contenedor)
-    entrada_nombres = Login2_0.crear_campo(marco1, "NOMBRES", 0, 0)
-    entrada_apellidos = Login2_0.crear_campo(marco1, "APELLIDOS", 0, 1)
-    entrada_ci = Login2_0.crear_campo(marco1, "CARNET DE IDENTIDAD - CI", 1, 0)
-    entrada_nacimiento = Login2_0.crear_campo_fecha(marco1, "FECHA DE NACIMIENTO", 1, 1)
-    combo_sexo = Login2_0.crear_combo(marco1, "SEXO", 2, 0, ["M - Masculino", "F - Femenino"])
+    marco1 = Componentes.crear_marco(contenedor)
+    entrada_nombres = Componentes.crear_campo(marco1, "NOMBRES", 0, 0)
+    entrada_apellidos = Componentes.crear_campo(marco1, "APELLIDOS", 0, 1)
+    entrada_ci = Componentes.crear_campo(marco1, "CARNET DE IDENTIDAD - CI", 1, 0)
+    entrada_nacimiento = Componentes.crear_campo_fecha(marco1, "FECHA DE NACIMIENTO", 1, 1)
+    combo_sexo = Componentes.crear_combo(marco1, "SEXO", 2, 0, ["M - Masculino", "F - Femenino"])
 
-    marco2 = Login2_0.crear_seccion(contenedor, "ASIGNACION DE HOGAR")
-    entrada_ingreso_sistema = Login2_0.crear_campo_fecha(marco2, "FECHA DE INGRESO-SISTEMA", 0, 0)
-    entrada_ingreso_hogar = Login2_0.crear_campo_fecha(marco2, "FECHA DE INGRESO AL HOGAR", 0, 1)
-    combo_hogar = Login2_0.crear_combo(marco2, "HOGAR ASIGNADO", 1, 0, nombres_hogares)
+    marco2 = Componentes.crear_seccion(contenedor, "ASIGNACION DE HOGAR")
+    entrada_ingreso_sistema = Componentes.crear_campo_fecha(marco2, "FECHA DE INGRESO-SISTEMA", 0, 0)
+    entrada_ingreso_hogar = Componentes.crear_campo_fecha(marco2, "FECHA DE INGRESO AL HOGAR", 0, 1)
+    combo_hogar = Componentes.crear_combo(marco2, "HOGAR ASIGNADO", 1, 0, nombres_hogares)
 
-    marco3 = Login2_0.crear_seccion(contenedor, "SITUACION PREVIA")
+    marco3 = Componentes.crear_seccion(contenedor, "SITUACION PREVIA")
     texto_situacion = tk.Text(marco3, height=5, font=("Arial", 12), relief="flat")
     texto_situacion.grid(row=0, column=0, columnspan=2, sticky="ew", padx=15, pady=10)
 
@@ -31,9 +32,9 @@ def mostrar(contenedor):
         entrada_nombres.delete(0, "end")
         entrada_apellidos.delete(0, "end")
         entrada_ci.delete(0, "end")
-        Login2_0.reiniciar_fecha(entrada_nacimiento)
-        Login2_0.reiniciar_fecha(entrada_ingreso_sistema)
-        Login2_0.reiniciar_fecha(entrada_ingreso_hogar)
+        Componentes.reiniciar_fecha(entrada_nacimiento)
+        Componentes.reiniciar_fecha(entrada_ingreso_sistema)
+        Componentes.reiniciar_fecha(entrada_ingreso_hogar)
         combo_sexo.set("")
         combo_hogar.set("")
         texto_situacion.delete("1.0", "end")
@@ -43,7 +44,7 @@ def mostrar(contenedor):
         apellido = entrada_apellidos.get().strip()
         ci = entrada_ci.get().strip()
         sexo_texto = combo_sexo.get()
-        posicion = combo_hogar.current()
+        posicion = combo_hogar.current() 
         situacion = texto_situacion.get("1.0", "end").strip()
 
         if nombre == "" or apellido == "" or ci == "" or sexo_texto == "" or posicion == -1 or situacion == "":
@@ -60,9 +61,9 @@ def mostrar(contenedor):
             messagebox.showwarning("Datos incorrectos", "La situación previa puede tener máximo 350 caracteres.")
             return
 
-        fecha_nacimiento = Login2_0.validar_fecha(entrada_nacimiento.get())
-        fecha_ingreso = Login2_0.validar_fecha(entrada_ingreso_sistema.get())
-        fecha_inicio_hogar = Login2_0.validar_fecha(entrada_ingreso_hogar.get())
+        fecha_nacimiento = Componentes.validar_fecha(entrada_nacimiento.get())
+        fecha_ingreso = Componentes.validar_fecha(entrada_ingreso_sistema.get())
+        fecha_inicio_hogar = Componentes.validar_fecha(entrada_ingreso_hogar.get())
         if fecha_nacimiento is None or fecha_ingreso is None or fecha_inicio_hogar is None:
             messagebox.showwarning("Fecha incorrecta", "Escribe las fechas con el formato AAAA-MM-DD.")
             return
@@ -77,13 +78,13 @@ def mostrar(contenedor):
         id_hogar = ids_hogares[posicion]
 
         try:
-            con = Login2_0.conectar()
+            conex = Conexion.conectar()
         except pymysql.MySQLError as error:
             messagebox.showerror("Base de datos", f"No se pudo conectar:\n{error}")
             return
 
         try:
-            cursor = con.cursor()
+            cursor = conex.cursor()
 
             cursor.execute("SELECT capacidad FROM hogar WHERE id_hogar = %s", (id_hogar,))
             capacidad = cursor.fetchone()[0]
@@ -102,13 +103,13 @@ def mostrar(contenedor):
             cursor.execute("INSERT INTO asignacion_hogar (id_participante, id_hogar, fecha_inicio) "
                            "VALUES (%s, %s, %s)", (id_participante, id_hogar, fecha_inicio_hogar))
 
-            con.commit()
+            conex.commit()
             messagebox.showinfo("Registro exitoso", f"Participante {nombre} {apellido} registrado.")
             limpiar()
         except pymysql.MySQLError as error:
-            con.rollback()
-            messagebox.showerror("Error al registrar", Login2_0.mensaje_error(error))
+            conex.rollback()
+            messagebox.showerror("Error al registrar", Conexion.mensaje_error(error))
         finally:
-            con.close()
+            conex.close()
 
-    Login2_0.crear_botones(contenedor, limpiar, registrar)
+    Componentes.crear_boton_registrar(contenedor, registrar)
